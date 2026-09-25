@@ -8,33 +8,38 @@
 import bcrypt from "bcryptjs";
 import pool from "../bd/conexion.js";
 
-const ADMIN_USERNAME = "admin";
-const ADMIN_PASSWORD = "admin123"; // cambiar despues del primer login
+const USERS_TO_SEED = [
+  { username: "admin", password: "admin123", rol: "admin" },
+  { username: "cajero1", password: "cajero123", rol: "cajero" },
+];
 
 async function seedAdmin() {
   try {
-    const [existing] = await pool.query(
-      "SELECT idUsuario FROM usuario WHERE username = ?",
-      [ADMIN_USERNAME]
-    );
+    for (const u of USERS_TO_SEED) {
+      const [existing] = await pool.query(
+        "SELECT idUsuario FROM usuario WHERE username = ?",
+        [u.username]
+      );
 
-    if (existing.length > 0) {
-      console.log("El usuario admin ya existe, no se creo de nuevo.");
-      process.exit(0);
+      if (existing.length > 0) {
+        console.log(`El usuario ${u.username} ya existe, no se creo de nuevo.`);
+        continue;
+      }
+
+      const hashedPassword = await bcrypt.hash(u.password, 10);
+
+      await pool.query(
+        "INSERT INTO usuario (username, password, rol, activo) VALUES (?, ?, ?, true)",
+        [u.username, hashedPassword, u.rol]
+      );
+
+      console.log(`Usuario ${u.rol} creado. username: ${u.username} / password: ${u.password}`);
     }
 
-    const hashedPassword = await bcrypt.hash(ADMIN_PASSWORD, 10);
-
-    await pool.query(
-      "INSERT INTO usuario (username, password, rol, activo) VALUES (?, ?, 'admin', true)",
-      [ADMIN_USERNAME, hashedPassword]
-    );
-
-    console.log(`Usuario admin creado. username: ${ADMIN_USERNAME} / password: ${ADMIN_PASSWORD}`);
-    console.log("IMPORTANTE: cambiar esta contraseña despues del primer login (o al menos antes de entregar el TP).");
+    console.log("IMPORTANTE: cambiar estas contraseñas despues del primer login (o al menos antes de entregar el TP).");
     process.exit(0);
   } catch (error) {
-    console.error("Error al crear el usuario admin:", error);
+    console.error("Error al crear usuarios:", error);
     process.exit(1);
   }
 }
