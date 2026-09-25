@@ -1,16 +1,47 @@
-# React + Vite
+# Sistema Kiosco — Proyecto UNAB
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Sistema web para la gestión integral de un kiosco/minimarket: control de productos y stock, punto de venta (POS), gestión de clientes para facturación, y cierre de caja.
 
-Currently, two official plugins are available:
+Proyecto desarrollado para la materia de la Universidad Nacional Guillermo Brown, bajo la modalidad Scrum, con entregas organizadas en 4 sprints.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+---
 
-## React Compiler
+## Equipo
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+| Integrante | Rol |
+|---|---|
+| Nahuel Dalesio | Scrum Master |
+| Agustín (agustinrd) | Frontend |
+| Alfredo Ramírez (alfredoramirez2021) | Frontend |
+| Javier (javisoundgarden) | Backend |
+| Karen Belén Pérez (karenbelenperez) | Documentación |
+| Marcos Bayget (marcosbayget) | UX/UI y QA |
 
-## Expanding the ESLint configuration
+**Product Owner:** la profesora de la cátedra.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+---
+
+## Stack tecnológico
+
+- **Frontend:** Vite + React + JavaScript
+- **Backend:** Node.js + Express + JavaScript
+- **Base de datos:** MySQL
+
+---
+
+## Documentación
+
+- [Guía de instalación y setup del proyecto](./SETUP.md) — cómo levantar el entorno local (backend + frontend + base de datos)
+- [Product Backlog](./docs/product_backlog.md) — historias de usuario, criterios de aceptación y planificación por sprint
+
+---
+
+## Estado del proyecto
+
+🟡 En desarrollo — Sprint 1 (Autenticación y roles)
+
+---
+
+## Metodología
+
+El proyecto se gestiona con **Scrum**, usando GitHub Issues y GitHub Projects como tablero Kanban. Cada Historia de Usuario del backlog se desglosa en sub-issues técnicas, asignadas por área (Frontend/Backend/QA/Docs) y agrupadas por Sprint mediante Milestones.
