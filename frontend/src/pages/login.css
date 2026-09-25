@@ -1,18 +1,36 @@
 .login-container {
-  padding: 12px 12px;
+  width: 100%;
+  padding: 12px;
   display: flex;
   justify-content: center;
+  box-sizing: border-box;
+}
+
+.login-container * {
+  box-sizing: border-box;
+}
+
+.login-container input,
+.login-container button {
+  min-height: 44px;
+  font-size: 1rem;
 }
 
 @media (max-width: 600px) {
   .swal-mobile {
-    width: 90vw !important;
+    width: 90% !important;
     font-size: 0.8rem;
   }
 }
 
-@media (max-width: 450px){
+@media (max-width: 450px) {
   .login-container {
-    margin: 0 1px 0 1px;
+    padding: 8px;
+    margin: 0;
+  }
+
+  .login-container > div {
+    padding: 20px !important;
+    margin: 0 !important;
   }
 }
