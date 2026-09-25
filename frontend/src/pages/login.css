@@ -1,0 +1,18 @@
+.login-container {
+  padding: 12px 12px;
+  display: flex;
+  justify-content: center;
+}
+
+@media (max-width: 600px) {
+  .swal-mobile {
+    width: 90vw !important;
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 450px){
+  .login-container {
+    margin: 0 1px 0 1px;
+  }
+}
