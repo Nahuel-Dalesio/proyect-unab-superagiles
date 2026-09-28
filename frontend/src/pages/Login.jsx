@@ -1,8 +1,8 @@
 import React, { useState, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { BASE_URL } from "../config";
-import Swal from "sweetalert2";
+import { loginRequest } from "../service/auth.service";
+import { showSuccess, showError } from "../utils/alerts";
 import "./login.css";
 
 const Login = () => {
@@ -14,50 +14,18 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch(`${BASE_URL}/api/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
-      });
+      const data = await loginRequest(username, password);
 
-      const data = await response.json();
-
-      if (response.ok) {
-        login(data.user, data.token);
-        Swal.fire({
-          title: "¡Bienvenido!",
-          text: "Inicio de sesión exitoso.",
-          icon: "success",
-          customClass: {
-            popup: "swal-mobile",
-          },
-        });
-        if (data.user.rol === "admin") {
-          navigate("/admin/productos");
-        } else {
-          navigate("/");
-        }
-      } else {
-        Swal.fire({
-          title: "Error",
-          text: data.message || "Credenciales inválidas",
-          icon: "error",
-          customClass: {
-            popup: "swal-mobile",
-          },
-        });
-      }
+      login(data.user, data.token);
+      showSuccess("Inicio de sesión exitoso.", "¡Bienvenido!");
+      navigate(data.user.rol === "admin" ? "/admin/productos" : "/");
     } catch (error) {
-      Swal.fire({
-        title: "Error",
-        text: "Error de conexión con el servidor",
-        icon: "error",
-        customClass: {
-          popup: "swal-mobile",
-        },
-      });
+      // Con status: el backend respondió con error. Sin status: falla de conexión.
+      showError(
+        error.status ? error.message : "Error de conexión con el servidor"
+      );
     }
-  }
+  };
 
   return (
     <div className="login-container">
