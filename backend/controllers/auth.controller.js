@@ -1,14 +1,10 @@
-import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
-import { findUserByUsername } from "../models/auth.model.js";
-import dotenv from "dotenv";
+import { loginUser, AuthError } from "../service/auth.service.js";
 
-dotenv.config();
-
-const SECRET = process.env.JWT_SECRET;
-if (!SECRET) {
-  throw new Error("JWT_SECRET no está definido en las variables de entorno");
-}
+// Traduce el code de negocio del service a un status HTTP
+const AUTH_ERROR_STATUS = {
+  INVALID_CREDENTIALS: 401,
+  USER_INACTIVE: 403,
+};
 
 export const login = async (req, res) => {
   const { username, password } = req.body;
@@ -18,35 +14,20 @@ export const login = async (req, res) => {
   }
 
   try {
-    const user = await findUserByUsername(username);
-    if (!user) {
-      return res.status(401).json({ message: "Credenciales inválidas" });
-    }
-
-    if (user.activo === false) {
-      return res.status(403).json({ message: "Usuario inactivo. Contactá al administrador." });
-    }
-
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(401).json({ message: "Credenciales inválidas" });
-    }
-
-    const token = jwt.sign(
-      { id: user.idUsuario, username: user.username, rol: user.rol },
-      SECRET,
-      { expiresIn: "8h" }
-    );
+    const { token, user } = await loginUser(username, password);
 
     res.json({
       message: "Login exitoso",
       token,
-      user: {
-        username: user.username,
-        rol: user.rol,
-      },
+      user,
     });
   } catch (error) {
+    if (error instanceof AuthError) {
+      return res
+        .status(AUTH_ERROR_STATUS[error.code] ?? 400)
+        .json({ message: error.message });
+    }
+
     res.status(500).json({ message: "Error al iniciar sesión", error: error.message });
   }
 };
