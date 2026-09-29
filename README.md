@@ -11,8 +11,9 @@ Proyecto desarrollado para la materia de la Universidad Nacional Guillermo Brown
 | Integrante | Rol |
 |---|---|
 | Nahuel Dalesio | Scrum Master |
-| Agustín (agustinrd) | Frontend |
+| Agustín (agustinrd) | Backend |
 | Alfredo Ramírez (alfredoramirez2021) | Frontend |
+| Federico (fedesiboldim) | Frontend |
 | Javier (javisoundgarden) | Backend |
 | Karen Belén Pérez (karenbelenperez) | Documentación |
 | Marcos Bayget (marcosbayget) | UX/UI y QA |
