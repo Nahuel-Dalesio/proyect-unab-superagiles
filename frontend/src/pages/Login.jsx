@@ -1,6 +1,6 @@
 import React, { useState, useContext } from "react";
-import { AuthContext } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext";
 import { loginRequest } from "../service/auth.service";
 import { showSuccess, showError } from "../utils/alerts";
 import "./login.css";
@@ -8,13 +8,30 @@ import "./login.css";
 const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [cargando, setCargando] = useState(false);
+
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!username.trim() || !password.trim()) {
+      showError("Ingresá tu usuario y contraseña.");
+      return;
+    }
+
+    setCargando(true);
+
     try {
       const data = await loginRequest(username, password);
+
+      // Sin usuario, rol o token válidos no se inicia sesión.
+      // No se asume ningún rol ni token por defecto.
+      if (!data?.user?.rol || !data?.token) {
+        showError("Respuesta inválida del servidor. Contactá al administrador.");
+        return;
+      }
 
       login(data.user, data.token);
       showSuccess("Inicio de sesión exitoso.", "¡Bienvenido!");
@@ -24,80 +41,56 @@ const Login = () => {
       showError(
         error.status ? error.message : "Error de conexión con el servidor"
       );
+    } finally {
+      setCargando(false);
     }
   };
 
   return (
-    <div className="login-container">
-      <div
-        style={{
-          maxWidth: "400px",
-          margin: "10px",
-          width: "100%",
-          padding: "30px",
-          border: "1px solid #ddd",
-          borderRadius: "10px",
-          backgroundColor: "#fff",
-          boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
-        }}
-      >
-        <h2 style={{ textAlign: "center", marginBottom: "20px" }}>
-          Iniciar sesión
-        </h2>
-        <form
-          onSubmit={handleSubmit}
-          style={{ display: "flex", flexDirection: "column", gap: "15px" }}
-        >
-          <div>
-            <label>Usuario:</label>
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-              style={{
-                fontSize: "14px",
-                width: "100%",
-                padding: "10px",
-                margin: "5px 0",
-                borderRadius: "4px",
-                border: "1px solid #ccc",
-              }}
-            />
-          </div>
-          <div>
-            <label>Contraseña:</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              style={{
-                fontSize: "14px",
-                width: "100%",
-                padding: "10px",
-                margin: "5px 0",
-                borderRadius: "4px",
-                border: "1px solid #ccc",
-              }}
-            />
-          </div>
-          <button
-            type="submit"
-            style={{
-              padding: "12px",
-              background: "#333",
-              color: "#fff",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer",
-              fontSize: "16px",
-              marginTop: "10px",
-            }}
-          >
-            Ingresar
-          </button>
-        </form>
+    <div className="login-page-container">
+      <div className="login-banner-side">
+        <div className="brand-badge">KWIK-E-MART</div>
+        <div className="brand-subtitle">Sistema Integral de Gestión</div>
+        <p className="brand-caption">
+          Punto de Venta e Inventario Springfield. Acceso centralizado para
+          administradores y cajeros.
+        </p>
+      </div>
+
+      <div className="login-form-side">
+        <div className="login-card">
+          <h2>Iniciar Sesión</h2>
+          <p>Ingresá tus credenciales para acceder al sistema</p>
+
+          <form onSubmit={handleSubmit}>
+            <div className="form-group">
+              <label htmlFor="user">Usuario</label>
+              <input
+                id="user"
+                type="text"
+                placeholder="Ej: admin o cajero1"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                autoFocus
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="pass">Contraseña</label>
+              <input
+                id="pass"
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+
+            <button type="submit" className="btn-submit" disabled={cargando}>
+              {cargando ? "Verificando..." : "Ingresar"}
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );
