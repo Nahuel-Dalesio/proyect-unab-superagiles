@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import Login from "../pages/Login";
 import ProtectedRoute from "../components/ProtectedRoute";
 
@@ -12,6 +12,9 @@ const AppRoutes = () => {
       {/* Ruta publica */}
       <Route path="/login" element={<Login />} />
 
+      {/* /admin a secas apunta al dashboard (asi el cajero pasa por ProtectedRoute) */}
+      <Route path="/admin" element={<Navigate to="/admin/productos" replace />} />
+
       {/* Rutas protegidas para Administrador */}
       <Route element={<ProtectedRoute requiredRole="admin" />}>
         <Route path="/admin/productos" element={<AdminDashboard />} />
@@ -22,8 +25,10 @@ const AppRoutes = () => {
         <Route path="/" element={<CajeroPOS />} />
       </Route>
 
-      {/* TEMPORAL - solo para diagnostico, borrar despues */}
-      <Route path="*" element={<div>NO MATCHEO NINGUNA RUTA</div>} />
+      {/* URL inexistente: sin sesion va a /login, con sesion muestra 404 */}
+      <Route element={<ProtectedRoute />}>
+        <Route path="*" element={<div>Página no encontrada</div>} />
+      </Route>
     </Routes>
   );
 };
