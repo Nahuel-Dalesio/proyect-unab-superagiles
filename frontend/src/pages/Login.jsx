@@ -14,7 +14,7 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch(`${BASE_URL}/api/auth/login`, {
+      const response = await fetch(BASE_URL + "/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
@@ -57,79 +57,59 @@ const Login = () => {
         },
       });
     }
-  }
+  };
 
   return (
     <div className="login-container">
-      <div
-        style={{
-          maxWidth: "400px",
-          margin: "10px",
-          width: "100%",
-          padding: "30px",
-          border: "1px solid #ddd",
-          borderRadius: "10px",
-          backgroundColor: "#fff",
-          boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
-        }}
-      >
-        <h2 style={{ textAlign: "center", marginBottom: "20px" }}>
-          Iniciar sesión
-        </h2>
-        <form
-          onSubmit={handleSubmit}
-          style={{ display: "flex", flexDirection: "column", gap: "15px" }}
-        >
-          <div>
-            <label>Usuario:</label>
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-              style={{
-                fontSize: "14px",
-                width: "100%",
-                padding: "10px",
-                margin: "5px 0",
-                borderRadius: "4px",
-                border: "1px solid #ccc",
-              }}
-            />
+      <div className="login-card">
+        {/* Columna Izquierda: Logo Kwik-E-Mart */}
+        <div className="login-banner">
+          <div className="kwik-badge">
+            <div className="kwik-logo-inner">
+              <span className="kwik-text-top">KWIK-E</span>
+              <span className="kwik-text-bottom">MART</span>
+            </div>
           </div>
-          <div>
-            <label>Contraseña:</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              style={{
-                fontSize: "14px",
-                width: "100%",
-                padding: "10px",
-                margin: "5px 0",
-                borderRadius: "4px",
-                border: "1px solid #ccc",
-              }}
-            />
+          <span className="kwik-tagline">Punto de Gestión</span>
+        </div>
+
+        {/* Columna Derecha: Formulario */}
+        <div className="login-form-side">
+          <h2>Iniciar Sesión</h2>
+          <p className="login-subtitle">Ingresá tus datos para acceder al sistema</p>
+
+          <form onSubmit={handleSubmit}>
+            <div className="form-group">
+              <label>Usuario</label>
+              <input
+                type="text"
+                placeholder="ej: admin o cajero1"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Contraseña</label>
+              <input
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+
+            <button type="submit" className="login-btn">
+              Ingresar
+            </button>
+          </form>
+
+          <div className="login-roles-info">
+            Roles disponibles: Super Admin / Cajero
           </div>
-          <button
-            type="submit"
-            style={{
-              padding: "12px",
-              background: "#333",
-              color: "#fff",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer",
-              fontSize: "16px",
-              marginTop: "10px",
-            }}
-          >
-            Ingresar
-          </button>
-        </form>
+        </div>
       </div>
     </div>
   );
