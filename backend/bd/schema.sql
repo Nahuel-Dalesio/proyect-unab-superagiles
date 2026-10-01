@@ -1,7 +1,39 @@
+-- =========================================================
+-- Esquema inicial de kiosco_db (issue #60)
+-- Se puede ejecutar varias veces: lo que ya existe no se recrea.
+-- =========================================================
+
+CREATE DATABASE IF NOT EXISTS kiosco_db
+    DEFAULT CHARACTER SET utf8mb4;
 USE kiosco_db;
 
--- La tabla usuario ya existe y no se recrea.
+-- Se ejecuta SIEMPRE, aunque la base ya exista:
+-- fija utf8mb4 como charset por defecto para las tablas nuevas.
+ALTER DATABASE kiosco_db CHARACTER SET utf8mb4;
 
+-- ---------------------------------------------------------
+-- usuario: si ya existe NO se recrea (ni se pierden sus datos)
+-- ---------------------------------------------------------
+CREATE TABLE IF NOT EXISTS usuario (
+    idUsuario INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    rol ENUM('cajero', 'admin') NOT NULL,
+    activo BOOLEAN DEFAULT true
+);
+
+-- Si usuario ya existia con otro charset, se convierte a utf8mb4.
+-- Los datos se conservan.
+ALTER TABLE usuario CONVERT TO CHARACTER SET utf8mb4;
+
+-- El usuario admin NO se inserta aca para no versionar un hash fijo.
+-- Se crea con el script seed.js (hash bcrypt generado en cada entorno).
+-- INSERT INTO usuario (username, password, rol, activo)
+-- VALUES ('admin', '<HASH_BCRYPT_AQUI>', 'admin', true);
+
+-- ---------------------------------------------------------
+-- productos
+-- ---------------------------------------------------------
 CREATE TABLE IF NOT EXISTS productos (
     id_producto INT AUTO_INCREMENT PRIMARY KEY,
     codigo_barras VARCHAR(50) UNIQUE,
@@ -18,39 +50,49 @@ CREATE TABLE IF NOT EXISTS productos (
     CHECK (stock_minimo >= 0)
 );
 
+-- ---------------------------------------------------------
+-- clientes: solo para quienes piden factura.
+-- Consumidor final = venta sin cliente (id_cliente NULL).
+-- ---------------------------------------------------------
 CREATE TABLE IF NOT EXISTS clientes (
     id_cliente INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
     apellido VARCHAR(100),
-    tipo_documento ENUM('DNI', 'CUIT', 'OTRO'),
-    numero_documento VARCHAR(20) UNIQUE,
+    tipo_documento ENUM('DNI', 'CUIT', 'CUIL') NOT NULL,
+    numero_documento VARCHAR(20) NOT NULL UNIQUE,
     email VARCHAR(100),
     telefono VARCHAR(30),
     direccion VARCHAR(255),
     activo BOOLEAN NOT NULL DEFAULT true
 );
 
-CREATE TABLE IF NOT EXISTS medios_pago (
-    id_medio_pago INT AUTO_INCREMENT PRIMARY KEY,
-    nombre VARCHAR(50) UNIQUE NOT NULL,
-    activo BOOLEAN NOT NULL DEFAULT true
-);
-
+-- ---------------------------------------------------------
+-- ventas
+-- id_cliente NULL = consumidor final (nunca significa "cliente borrado",
+-- porque los clientes no se pueden borrar: ON DELETE RESTRICT).
+-- ---------------------------------------------------------
 CREATE TABLE IF NOT EXISTS ventas (
     id_venta INT AUTO_INCREMENT PRIMARY KEY,
     fecha_hora DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     idUsuario INT NOT NULL,
-    id_cliente INT,
-    id_medio_pago INT NOT NULL,
+    id_cliente INT NULL,
+    medio_pago ENUM('efectivo', 'debito', 'credito', 'transferencia', 'qr') NOT NULL,
     total DECIMAL(10,2) NOT NULL,
     estado ENUM('completada', 'anulada') NOT NULL DEFAULT 'completada',
     CHECK (total >= 0),
-    FOREIGN KEY (idUsuario) REFERENCES usuario(idUsuario),
+    -- Reportes por fecha (todas las ventas entre dos fechas)
+    INDEX idx_ventas_fecha (fecha_hora),
+    -- Reportes por usuario, y por usuario + fecha
+    INDEX idx_ventas_usuario_fecha (idUsuario, fecha_hora),
+    FOREIGN KEY (idUsuario) REFERENCES usuario(idUsuario)
+        ON DELETE RESTRICT,
     FOREIGN KEY (id_cliente) REFERENCES clientes(id_cliente)
-        ON DELETE SET NULL,
-    FOREIGN KEY (id_medio_pago) REFERENCES medios_pago(id_medio_pago)
+        ON DELETE RESTRICT
 );
 
+-- ---------------------------------------------------------
+-- detalle_venta
+-- ---------------------------------------------------------
 CREATE TABLE IF NOT EXISTS detalle_venta (
     id_detalle INT AUTO_INCREMENT PRIMARY KEY,
     id_venta INT NOT NULL,
@@ -61,10 +103,15 @@ CREATE TABLE IF NOT EXISTS detalle_venta (
     CHECK (cantidad > 0),
     CHECK (precio_unitario >= 0),
     CHECK (subtotal >= 0),
-    FOREIGN KEY (id_venta) REFERENCES ventas(id_venta),
+    FOREIGN KEY (id_venta) REFERENCES ventas(id_venta)
+        ON DELETE RESTRICT,
     FOREIGN KEY (id_producto) REFERENCES productos(id_producto)
+        ON DELETE RESTRICT
 );
 
+-- ---------------------------------------------------------
+-- cierres_caja
+-- ---------------------------------------------------------
 CREATE TABLE IF NOT EXISTS cierres_caja (
     id_cierre INT AUTO_INCREMENT PRIMARY KEY,
     idUsuario INT NOT NULL,
@@ -76,11 +123,5 @@ CREATE TABLE IF NOT EXISTS cierres_caja (
     diferencia DECIMAL(10,2),
     estado ENUM('abierta', 'cerrada') NOT NULL DEFAULT 'abierta',
     FOREIGN KEY (idUsuario) REFERENCES usuario(idUsuario)
+        ON DELETE RESTRICT
 );
-
-INSERT IGNORE INTO medios_pago (nombre) VALUES
-    ('Efectivo'),
-    ('Débito'),
-    ('Crédito'),
-    ('Transferencia'),
-    ('QR');
