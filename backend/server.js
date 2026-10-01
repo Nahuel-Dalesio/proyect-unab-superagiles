@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import authRoutes from "./routes/auth.routes.js";
+import productRoutes from "./routes/producto.routes.js";
 
 dotenv.config();
 
@@ -15,6 +16,7 @@ app.use(express.json()); // permite leer JSON en el body de los requests
 
 // --- Rutas ---
 app.use("/api", authRoutes);
+app.use("/api", productRoutes);
 
 // Ruta de prueba simple para verificar que el server esta vivo
 app.get("/", (req, res) => {
