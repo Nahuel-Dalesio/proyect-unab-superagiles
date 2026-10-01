@@ -24,7 +24,7 @@ export const createProduct = async (req, res) => {
         .json({ message: error.message });
     }
 
-    if (error.code === "ER_DUP_ENTRY") {
+    if (error?.code === "ER_DUP_ENTRY") {
       return res.status(409).json({
         message: "Ya existe un producto con ese código de barras",
       });
