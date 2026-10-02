@@ -1,4 +1,5 @@
 import {
+  findProducts,
   findProductByBarcode,
   createProduct as insertProduct,
 } from "../models/producto.model.js";
@@ -80,4 +81,10 @@ export const registerProduct = async (data) => {
   });
 
   return { idProducto, codigoBarras, nombre, precioCosto, precioVenta, stock };
+};
+
+export const searchProducts = async (search) => {
+  const normalizedSearch = String(search ?? "").trim();
+
+  return findProducts(normalizedSearch);
 };

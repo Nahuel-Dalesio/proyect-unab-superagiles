@@ -1,4 +1,5 @@
 import {
+  searchProducts,
   registerProduct,
   ProductError,
 } from "../service/producto.service.js";
@@ -34,6 +35,19 @@ export const createProduct = async (req, res) => {
 
     return res.status(500).json({
       message: "Error interno al crear el producto",
+    });
+  }
+};
+export const getProducts = async (req, res) => {
+  try {
+    const products = await searchProducts(req.query.search);
+
+    return res.status(200).json(products);
+  } catch (error) {
+    console.error("Error al obtener productos:", error);
+
+    return res.status(500).json({
+      message: "Error interno al obtener los productos",
     });
   }
 };
