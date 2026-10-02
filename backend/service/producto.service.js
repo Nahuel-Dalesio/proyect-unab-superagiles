@@ -1,4 +1,5 @@
 import {
+  findProducts,
   findProductByBarcode,
   createProduct as insertProduct,
 } from "../models/producto.model.js";
@@ -80,4 +81,15 @@ export const registerProduct = async (data) => {
   });
 
   return { idProducto, codigoBarras, nombre, precioCosto, precioVenta, stock };
+};
+
+const ROLES_CON_COSTO = ["admin", "encargado"];
+
+export const searchProducts = async (search, rol) => {
+  const normalizedSearch = String(search ?? "").trim();
+  const products = await findProducts(normalizedSearch);
+
+  if (ROLES_CON_COSTO.includes(rol)) return products;
+
+  return products.map(({ precioCosto, ...resto }) => resto);
 };
