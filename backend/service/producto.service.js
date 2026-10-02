@@ -83,8 +83,13 @@ export const registerProduct = async (data) => {
   return { idProducto, codigoBarras, nombre, precioCosto, precioVenta, stock };
 };
 
-export const searchProducts = async (search) => {
-  const normalizedSearch = String(search ?? "").trim();
+const ROLES_CON_COSTO = ["admin", "encargado"];
 
-  return findProducts(normalizedSearch);
+export const searchProducts = async (search, rol) => {
+  const normalizedSearch = String(search ?? "").trim();
+  const products = await findProducts(normalizedSearch);
+
+  if (ROLES_CON_COSTO.includes(rol)) return products;
+
+  return products.map(({ precioCosto, ...resto }) => resto);
 };

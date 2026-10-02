@@ -40,7 +40,7 @@ export const createProduct = async (req, res) => {
 };
 export const getProducts = async (req, res) => {
   try {
-    const products = await searchProducts(req.query.search);
+    const products = await searchProducts(req.query.search, req.user.rol);
 
     return res.status(200).json(products);
   } catch (error) {
