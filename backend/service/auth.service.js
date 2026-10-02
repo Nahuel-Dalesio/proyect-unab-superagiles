@@ -26,7 +26,7 @@ export const loginUser = async (username, password) => {
     throw new AuthError("INVALID_CREDENTIALS", "Credenciales inválidas");
   }
 
-  if (user.activo === false) {
+  if (!user.activo) {
     throw new AuthError(
       "USER_INACTIVE",
       "Usuario inactivo. Contactá al administrador."

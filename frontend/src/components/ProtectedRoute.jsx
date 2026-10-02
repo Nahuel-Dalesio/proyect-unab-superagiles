@@ -2,15 +2,8 @@ import React, { useContext, useEffect, useRef } from "react";
 import { Navigate, Outlet } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { showUnauthorized } from "../utils/alerts";
+import { ROLES } from "../utils/roles";
 
-// Dado el rol del usuario, devuelve su ruta "home" correspondiente
-const getHomeByRole = (rol) => {
-  if (rol === "admin") return "/admin/productos";
-  if (rol === "cajero") return "/";
-  return "/login";
-};
-
-// Redirige y muestra el aviso una sola vez (el ref evita el doble disparo de StrictMode)
 const UnauthorizedRedirect = ({ to }) => {
   const alerted = useRef(false);
 
@@ -23,19 +16,20 @@ const UnauthorizedRedirect = ({ to }) => {
   return <Navigate to={to} replace />;
 };
 
-const ProtectedRoute = ({ requiredRole }) => {
+// allowedRoles: lista de roles con acceso. Si se omite, basta con estar logueado.
+const ProtectedRoute = ({ allowedRoles }) => {
   const { user, token, loading } = useContext(AuthContext);
 
   if (loading) {
     return <div>Cargando sesión...</div>;
   }
 
-  if (!token || !user) {
+  if (!token || !user || !Object.values(ROLES).includes(user.rol)) {
     return <Navigate to="/login" replace />;
   }
 
-  if (requiredRole && user.rol !== requiredRole) {
-    return <UnauthorizedRedirect to={getHomeByRole(user.rol)} />;
+  if (allowedRoles && !allowedRoles.includes(user.rol)) {
+    return <UnauthorizedRedirect to="/" />;
   }
 
   return <Outlet />;

@@ -10,6 +10,7 @@ import pool from "../bd/conexion.js";
 
 const USERS_TO_SEED = [
   { username: "admin", password: "admin123", rol: "admin" },
+  { username: "encargado1", password: "encargado123", rol: "encargado" },
   { username: "cajero1", password: "cajero123", rol: "cajero" },
 ];
 

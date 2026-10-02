@@ -35,7 +35,7 @@ const Login = () => {
 
       login(data.user, data.token);
       showSuccess("Inicio de sesión exitoso.", "¡Bienvenido!");
-      navigate(data.user.rol === "admin" ? "/admin/productos" : "/");
+      navigate(data.user.rol === "admin" || data.user.rol === "encargado" ? "/admin/productos" : "/");
     } catch (error) {
       // Con status: el backend respondió con error. Sin status: falla de conexión.
       showError(

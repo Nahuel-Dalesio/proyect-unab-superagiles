@@ -41,9 +41,14 @@ export const optionalAuth = (req, _res, next) => {
   });
 };
 
-export const isAdmin = (req, res, next) => {
-  if (req.user && req.user.rol === "admin") {
-    return next();
+// Uso: authorizeRoles("admin", "encargado"). Va siempre después de verifyToken.
+export const authorizeRoles = (...rolesPermitidos) => (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({ message: "No autenticado" });
   }
-  return res.status(403).json({ message: "Requiere rol de Administrador" });
+  if (!rolesPermitidos.includes(req.user.rol)) {
+    return res.status(403).json({ message: "No tenés permisos para esta acción" });
+  }
+  next();
 };
+
