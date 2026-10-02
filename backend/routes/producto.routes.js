@@ -3,7 +3,10 @@ import {
   createProduct,
   getProducts,
 } from "../controllers/producto.controller.js";
-import { verifyToken, authorizeRoles } from "../middlewares/auth.middleware.js";
+import {
+  verifyToken,
+  authorizeRoles,
+} from "../middlewares/auth.middleware.js";
 
 const router = Router();
 

@@ -9,6 +9,7 @@ export const findProductByBarcode = async (codigoBarras) => {
   return rows[0];
 };
 
+
 export const findProducts = async (search = "") => {
   const searchPattern = `%${search}%`;
 
