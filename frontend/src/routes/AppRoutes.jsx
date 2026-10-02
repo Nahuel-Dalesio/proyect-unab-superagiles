@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import Login from "../pages/Login";
 import ProtectedRoute from "../components/ProtectedRoute";
+import { ROLES } from "../utils/roles";
 
 // Paginas placeholder, reemplazar cuando se armen los modulos reales (Sprint 2/3)
 import AdminDashboard from "../pages/AdminDashboard";
@@ -12,16 +13,14 @@ const AppRoutes = () => {
       {/* Ruta publica */}
       <Route path="/login" element={<Login />} />
 
-      {/* /admin a secas apunta al dashboard (asi el cajero pasa por ProtectedRoute) */}
-      <Route path="/admin" element={<Navigate to="/admin/productos" replace />} />
-
-      {/* Rutas protegidas para Administrador */}
-      <Route element={<ProtectedRoute requiredRole="admin" />}>
+      {/* Inventario: admin y encargado */}
+      <Route element={<ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.ENCARGADO]} />}>
+        <Route path="/admin" element={<Navigate to="/admin/productos" replace />} />
         <Route path="/admin/productos" element={<AdminDashboard />} />
       </Route>
 
-      {/* Rutas protegidas para Cajero */}
-      <Route element={<ProtectedRoute requiredRole="cajero" />}>
+      {/* POS: cualquier rol valido (admin, encargado y cajero) */}
+      <Route element={<ProtectedRoute />}>
         <Route path="/" element={<CajeroPOS />} />
       </Route>
 
