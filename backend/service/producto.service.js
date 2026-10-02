@@ -1,4 +1,5 @@
 import {
+  findProducts,
   findProductByBarcode,
   createProduct as insertProduct,
 } from "../models/producto.model.js";
@@ -14,6 +15,7 @@ export class ProductError extends Error {
 // Límites según el esquema de la tabla `productos`
 const MAX_CODIGO_BARRAS = 50; // varchar(50)
 const MAX_NOMBRE = 100; // varchar(100)
+const MAX_DESCRIPCION = 255; // varchar(255)
 const MAX_PRECIO = 99999999.99; // decimal(10,2)
 const MAX_STOCK = 2147483647; // int
 
@@ -25,15 +27,27 @@ const parseNumber = (value) => {
   return NaN;
 };
 
+// Un campo opcional "no vino" si es undefined, null o un string vacío.
+const isBlank = (value) =>
+  value === undefined ||
+  value === null ||
+  (typeof value === "string" && value.trim() === "");
+
 const isValidPrice = (n) =>
   Number.isFinite(n) && n >= 0 && n <= MAX_PRECIO && Number(n.toFixed(2)) === n; // máx. 2 decimales
+
+const isValidCount = (n) => Number.isInteger(n) && n >= 0 && n <= MAX_STOCK;
 
 export const registerProduct = async (data) => {
   const codigoBarras = String(data.codigoBarras ?? "").trim();
   const nombre = String(data.nombre ?? "").trim();
+  // Descripción opcional: vacía se guarda como NULL, no como ""
+  const descripcion = String(data.descripcion ?? "").trim() || null;
   const precioCosto = parseNumber(data.precioCosto);
   const precioVenta = parseNumber(data.precioVenta);
   const stock = parseNumber(data.stock);
+  // Stock mínimo opcional: si no viene, vale 0 (igual que el default de la tabla)
+  const stockMinimo = isBlank(data.stockMinimo) ? 0 : parseNumber(data.stockMinimo);
 
   if (!codigoBarras || !nombre) {
     throw new ProductError(
@@ -49,16 +63,22 @@ export const registerProduct = async (data) => {
     );
   }
 
+  if (descripcion && descripcion.length > MAX_DESCRIPCION) {
+    throw new ProductError(
+      "INVALID_VALUES",
+      `La descripción admite hasta ${MAX_DESCRIPCION} caracteres`
+    );
+  }
+
   if (
     !isValidPrice(precioCosto) ||
     !isValidPrice(precioVenta) ||
-    !Number.isInteger(stock) ||
-    stock < 0 ||
-    stock > MAX_STOCK
+    !isValidCount(stock) ||
+    !isValidCount(stockMinimo)
   ) {
     throw new ProductError(
       "INVALID_VALUES",
-      "Los precios (máx. 2 decimales) y el stock (entero) deben ser números válidos y no negativos"
+      "Los precios (máx. 2 decimales) deben ser números válidos y no negativos; el stock y el stock mínimo deben ser enteros no negativos"
     );
   }
 
@@ -74,10 +94,32 @@ export const registerProduct = async (data) => {
   const idProducto = await insertProduct({
     codigoBarras,
     nombre,
+    descripcion,
     precioCosto,
     precioVenta,
     stock,
+    stockMinimo,
   });
 
-  return { idProducto, codigoBarras, nombre, precioCosto, precioVenta, stock };
+  return {
+    idProducto,
+    codigoBarras,
+    nombre,
+    descripcion,
+    precioCosto,
+    precioVenta,
+    stock,
+    stockMinimo,
+  };
+};
+
+const ROLES_CON_COSTO = ["admin", "encargado"];
+
+export const searchProducts = async (search, rol) => {
+  const normalizedSearch = String(search ?? "").trim();
+  const products = await findProducts(normalizedSearch);
+
+  if (ROLES_CON_COSTO.includes(rol)) return products;
+
+  return products.map(({ precioCosto, ...resto }) => resto);
 };
