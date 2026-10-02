@@ -112,13 +112,7 @@
   color: #1a5c32;
 }
 
-.cat-pill {
-  background: #e2e8f0;
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 0.8rem;
-  color: #475569;
-}
+
 
 /* Alertas de stock */
 .badge {
@@ -249,4 +243,9 @@
   border-radius: 6px;
   font-weight: bold;
   cursor: pointer;
+}
+
+.btn-action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }

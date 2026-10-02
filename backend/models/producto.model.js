@@ -8,6 +8,8 @@ export const findProductByBarcode = async (codigoBarras) => {
 
   return rows[0];
 };
+
+
 export const findProducts = async (search = "") => {
   const searchPattern = `%${search}%`;
 
@@ -31,18 +33,21 @@ export const findProducts = async (search = "") => {
 
   return rows;
 };
+
 export const createProduct = async ({
   codigoBarras,
   nombre,
+  descripcion,
   precioCosto,
   precioVenta,
   stock,
+  stockMinimo,
 }) => {
   const [result] = await pool.query(
     `INSERT INTO productos
-      (codigo_barras, nombre, precio_costo, precio_venta, stock)
-     VALUES (?, ?, ?, ?, ?)`,
-    [codigoBarras, nombre, precioCosto, precioVenta, stock]
+      (codigo_barras, nombre, descripcion, precio_costo, precio_venta, stock, stock_minimo)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    [codigoBarras, nombre, descripcion, precioCosto, precioVenta, stock, stockMinimo]
   );
 
   return result.insertId;
