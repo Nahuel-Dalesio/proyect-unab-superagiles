@@ -2,7 +2,8 @@ import React, { useState, useContext, useEffect, useCallback } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { getProductos, crearProducto } from "../service/product.service";
 import { showSuccess, showError, showWarning } from "../utils/alerts";
-import "./AdminDashboard.css";
+import { ROLES } from "../utils/roles";
+import "./Productos.css";
 
 const FORM_INICIAL = {
   codigoBarras: "",
@@ -29,8 +30,13 @@ const normalizar = (texto) =>
     .toLowerCase()
     .trim();
 
-export default function AdminDashboard() {
-  const { logout } = useContext(AuthContext);
+export default function Productos() {
+  const { user, logout } = useContext(AuthContext);
+
+  // Solo UX: la seguridad real está en el backend (authorizeRoles y filtro de precioCosto)
+  const esGestor = user?.rol === ROLES.ADMIN || user?.rol === ROLES.ENCARGADO;
+  const totalColumnas = esGestor ? 8 : 6;
+
   const [productos, setProductos] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [errorCarga, setErrorCarga] = useState("");
@@ -119,7 +125,7 @@ export default function AdminDashboard() {
     if (cargando) {
       return (
         <tr>
-          <td colSpan="8" style={{ textAlign: "center", padding: "20px" }}>
+          <td colSpan={totalColumnas} style={{ textAlign: "center", padding: "20px" }}>
             Cargando productos...
           </td>
         </tr>
@@ -129,7 +135,7 @@ export default function AdminDashboard() {
     if (errorCarga) {
       return (
         <tr>
-          <td colSpan="8" style={{ textAlign: "center", padding: "20px" }}>
+          <td colSpan={totalColumnas} style={{ textAlign: "center", padding: "20px" }}>
             {errorCarga}{" "}
             <button className="btn-action edit" onClick={cargarProductos}>
               Reintentar
@@ -142,7 +148,7 @@ export default function AdminDashboard() {
     if (productosFiltrados.length === 0) {
       return (
         <tr>
-          <td colSpan="8" style={{ textAlign: "center", padding: "20px" }}>
+          <td colSpan={totalColumnas} style={{ textAlign: "center", padding: "20px" }}>
             No se encontraron productos coincidentes
           </td>
         </tr>
@@ -160,7 +166,7 @@ export default function AdminDashboard() {
         >
           <td><strong>{prod.codigoBarras}</strong></td>
           <td>{prod.nombre}</td>
-          <td>{formatoPrecio(prod.precioCosto)}</td>
+          {esGestor && <td>{formatoPrecio(prod.precioCosto)}</td>}
           <td className="col-precio">{formatoPrecio(prod.precioVenta)}</td>
           <td><strong>{prod.stock}</strong> u.</td>
           <td>{prod.stockMinimo} u.</td>
@@ -173,14 +179,16 @@ export default function AdminDashboard() {
               <span className="badge badge-ok">NORMAL</span>
             )}
           </td>
-          <td style={{ textAlign: "center" }}>
-            <button className="btn-action edit" disabled title="Próximamente">
-              Editar
-            </button>
-            <button className="btn-action delete" disabled title="Próximamente">
-              Borrar
-            </button>
-          </td>
+          {esGestor && (
+            <td style={{ textAlign: "center" }}>
+              <button className="btn-action edit" disabled title="Próximamente">
+                Editar
+              </button>
+              <button className="btn-action delete" disabled title="Próximamente">
+                Borrar
+              </button>
+            </td>
+          )}
         </tr>
       );
     });
@@ -192,10 +200,10 @@ export default function AdminDashboard() {
       <header className="admin-header">
         <div className="admin-brand">
           <span className="kwik-badge">KWIK-E-MART</span>
-          <h2>Panel de Administración & Inventario</h2>
+          <h2>Inventario de Productos</h2>
         </div>
         <div className="admin-user-nav">
-          <span>Usuario: <strong>admin</strong> (Administrador)</span>
+          <span>Usuario: <strong>{user?.username}</strong> ({user?.rol})</span>
           <button
             className="btn-admin-logout"
             onClick={() => {
@@ -221,9 +229,11 @@ export default function AdminDashboard() {
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
           />
-          <button className="btn-add-product" onClick={abrirModal}>
-            + Nuevo Producto
-          </button>
+          {esGestor && (
+            <button className="btn-add-product" onClick={abrirModal}>
+              + Nuevo Producto
+            </button>
+          )}
         </div>
 
         {/* Tabla de Inventario */}
@@ -233,12 +243,12 @@ export default function AdminDashboard() {
               <tr>
                 <th>Código</th>
                 <th>Nombre</th>
-                <th>Precio costo</th>
+                {esGestor && <th>Precio costo</th>}
                 <th>Precio venta</th>
                 <th>Stock actual</th>
                 <th>Stock mínimo</th>
                 <th>Estado</th>
-                <th style={{ textAlign: "center" }}>Acciones</th>
+                {esGestor && <th style={{ textAlign: "center" }}>Acciones</th>}
               </tr>
             </thead>
             <tbody>{renderCuerpoTabla()}</tbody>
@@ -246,8 +256,8 @@ export default function AdminDashboard() {
         </div>
       </main>
 
-      {/* Modal de alta */}
-      {modalAbierto && (
+      {/* Modal de alta (solo admin y encargado) */}
+      {esGestor && modalAbierto && (
         <div className="modal-backdrop">
           <div className="modal-box">
             <h3>Nuevo Producto</h3>
