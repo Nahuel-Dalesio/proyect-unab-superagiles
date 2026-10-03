@@ -1,10 +1,9 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import Login from "../pages/Login";
 import ProtectedRoute from "../components/ProtectedRoute";
-
-// Paginas placeholder, reemplazar cuando se armen los modulos reales (Sprint 2/3)
+import MainLayout from "../layouts/MainLayout";
+import Caja from "../pages/Caja";
 import Productos from "../pages/Productos";
-
 
 const AppRoutes = () => {
   return (
@@ -12,16 +11,16 @@ const AppRoutes = () => {
       {/* Ruta publica */}
       <Route path="/login" element={<Login />} />
 
-      {/* POS y Productos: cualquier rol valido (admin, encargado y cajero).
-          Las acciones de gestion se ocultan al cajero dentro de la pantalla. */}
+      {/* Rutas con sesion: cualquier rol valido, todas dentro del layout compartido.
+          Las acciones de gestion se ocultan al cajero dentro de cada pantalla. */}
       <Route element={<ProtectedRoute />}>
-        
-        <Route path="/productos" element={<Productos />} />
-      </Route>
-
-      {/* URL inexistente: sin sesion va a /login, con sesion muestra 404 */}
-      <Route element={<ProtectedRoute />}>
-        <Route path="*" element={<div>Página no encontrada</div>} />
+        <Route element={<MainLayout />}>
+          {/* "Inicio" no existe por ahora: la raiz redirige a Caja */}
+          <Route path="/" element={<Navigate to="/caja" replace />} />
+          <Route path="/caja" element={<Caja />} />
+          <Route path="/productos" element={<Productos />} />
+          <Route path="*" element={<div>Página no encontrada</div>} />
+        </Route>
       </Route>
     </Routes>
   );
