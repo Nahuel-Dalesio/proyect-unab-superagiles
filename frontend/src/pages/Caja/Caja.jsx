@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Swal from "sweetalert2";
 import { Minus, Plus } from "lucide-react";
-import { getProductos } from "../service/product.service";
-import { showError, showWarning } from "../utils/alerts";
+import { getProductos } from "../../service/product.service";
+import { showError, showWarning } from "../../utils/alerts";
 
 // MySQL devuelve los DECIMAL como string, por eso se convierte a número
 const formatoPrecio = (valor) =>
@@ -200,7 +200,7 @@ export default function Caja() {
               </tr>
             ) : (
               carrito.map((item) => (
-                <tr key={item.idProducto} className="border-b last:border-b-0">
+                <tr key={item.idProducto} className="border-b last:border-none">
                   <td className="px-4 py-3">{item.nombre}</td>
                   <td className="px-4 py-3">{item.codigoBarras}</td>
                   <td className="px-4 py-3">{formatoPrecio(item.precioVenta)}</td>

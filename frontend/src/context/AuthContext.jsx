@@ -1,20 +1,34 @@
 import React, { createContext, useState, useEffect } from "react";
+import { ROLES } from "../utils/roles";
 
 export const AuthContext = createContext();
 
+export const DEFAULT_MOCK_USER = {
+  id: 1,
+  username: "admin_demo",
+  nombre: "Usuario Demo (Admin)",
+  rol: ROLES.ADMIN,
+};
+
+export const DEFAULT_MOCK_TOKEN = "mock-dev-token";
+
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem("token"));
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(() => {
+    const savedUser = localStorage.getItem("user");
+    return savedUser ? JSON.parse(savedUser) : DEFAULT_MOCK_USER;
+  });
+
+  const [token, setToken] = useState(() => {
+    return localStorage.getItem("token") || DEFAULT_MOCK_TOKEN;
+  });
+
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const savedToken = localStorage.getItem("token");
-    const savedUser = localStorage.getItem("user");
-    if (savedToken && savedUser) {
-      setToken(savedToken);
-      setUser(JSON.parse(savedUser));
+    if (!localStorage.getItem("token")) {
+      localStorage.setItem("token", DEFAULT_MOCK_TOKEN);
+      localStorage.setItem("user", JSON.stringify(DEFAULT_MOCK_USER));
     }
-    setLoading(false);
   }, []);
 
   const login = (userData, userToken) => {
@@ -25,10 +39,10 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
-    setUser(null);
-    setToken(null);
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    setUser(DEFAULT_MOCK_USER);
+    setToken(DEFAULT_MOCK_TOKEN);
+    localStorage.setItem("token", DEFAULT_MOCK_TOKEN);
+    localStorage.setItem("user", JSON.stringify(DEFAULT_MOCK_USER));
   };
 
   return (
@@ -37,3 +51,4 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 };
+
