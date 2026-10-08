@@ -1,8 +1,10 @@
+/*
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
+*/
 
 .login-page-container {
   display: flex;
@@ -12,7 +14,7 @@
   background-color: #f4f6f8;
 }
 
-/* Columna Izquierda: Identidad Kwik-E-Mart */
+/* Columna Izquierda: Identidad Kwik-E-Mart 
 .login-banner-side {
   flex: 1.1;
   background: linear-gradient(135deg, #0d3b1e 0%, #1a5c32 100%);
@@ -53,7 +55,7 @@
   line-height: 1.5;
 }
 
-/* Columna Derecha: Formulario */
+/* Columna Derecha: Formulario 
 .login-form-side {
   flex: 1;
   display: flex;
@@ -149,4 +151,4 @@
     padding: 30px 20px;
     flex: unset;
   }
-}
+} */

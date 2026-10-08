@@ -1,4 +1,4 @@
-.pos-container {
+/* .pos-container {
   display: flex;
   flex-direction: column;
   height: 100vh;
@@ -58,7 +58,7 @@
   overflow: hidden;
 }
 
-/* Catalogo de productos */
+/* Catalogo de productos 
 .pos-catalog {
   flex: 2;
   display: flex;
@@ -128,7 +128,7 @@
   font-weight: bold;
 }
 
-/* Ticket de venta */
+/* Ticket de venta 
 .pos-ticket {
   flex: 1.2;
   background: white;
@@ -249,4 +249,4 @@
 
 .btn-checkout:hover {
   background: #219150;
-}
+} */
