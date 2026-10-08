@@ -1,4 +1,4 @@
-.admin-layout {
+/* .admin-layout {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
@@ -114,7 +114,7 @@
 
 
 
-/* Alertas de stock */
+/* Alertas de stock 
 .badge {
   font-size: 0.75rem;
   font-weight: 800;
@@ -145,7 +145,7 @@
   background-color: #fff5f5;
 }
 
-/* Botones de acción */
+/* Botones de acción 
 .btn-action {
   border: none;
   padding: 6px 12px;
@@ -166,7 +166,7 @@
   color: white;
 }
 
-/* Modal */
+/* Modal 
 .modal-backdrop {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
@@ -248,4 +248,4 @@
 .btn-action:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-}
+} */

@@ -1,6 +1,6 @@
 import { useContext } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { LogOut, Package, ShoppingCart } from "lucide-react";
+import { LogOut, Package, ShoppingCart, Store } from "lucide-react";
 import { AuthContext } from "@/context/AuthContext";
 import { ROLES } from "@/utils/roles";
 import {
@@ -9,7 +9,6 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -26,8 +25,8 @@ const MENU_ITEMS = [
     roles: [ROLES.ADMIN, ROLES.ENCARGADO, ROLES.CAJERO],
   },
   {
-    label: "Productos",
-    path: "/productos",
+    label: "Inventario",
+    path: "/inventario",
     icon: Package,
     roles: [ROLES.ADMIN, ROLES.ENCARGADO, ROLES.CAJERO],
   },
@@ -46,16 +45,21 @@ export default function AppSidebar() {
   );
 
   return (
-    <Sidebar>
-      <SidebarHeader className="h-14 justify-center border-b px-4">
-        <span className="font-medium">Kwik-E-Mart</span>
+    <Sidebar collapsible="icon">
+      <SidebarHeader className="h-14 justify-center border-b px-4 group-data-[collapsible=icon]:px-4 bg-card">
+        <div className="flex items-center gap-2 group-data-[collapsible=icon]:justify-left">
+          <Store className="size-5 shrink-0" />
+          <span className="font-semibold truncate group-data-[collapsible=icon]:hidden">
+            Kwik-E-Mart
+          </span>
+        </div>
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent className="bg-card">
         <SidebarGroup>
-          <SidebarGroupLabel>Menú</SidebarGroupLabel>
+
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="gap-1">
               {itemsVisibles.map(({ label, path, icon: Icon }) => (
                 <SidebarMenuItem key={path}>
                   <SidebarMenuButton
@@ -66,7 +70,9 @@ export default function AppSidebar() {
                   >
                     <Link to={path}>
                       <Icon />
-                      <span>{label}</span>
+                      <span className="group-data-[collapsible=icon]:hidden">
+                        {label}
+                      </span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -81,7 +87,9 @@ export default function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton tooltip="Cerrar sesión" onClick={logout}>
               <LogOut />
-              <span>Cerrar sesión</span>
+              <span className="group-data-[collapsible=icon]:hidden">
+                Cerrar sesión
+              </span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
