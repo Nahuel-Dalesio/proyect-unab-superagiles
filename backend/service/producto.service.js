@@ -1,7 +1,9 @@
 import {
   findProducts,
   findProductByBarcode,
+  findProductById,
   createProduct as insertProduct,
+  updateProductById,
 } from "../models/producto.model.js";
 
 export class ProductError extends Error {
@@ -122,4 +124,46 @@ export const searchProducts = async (search, rol) => {
   if (ROLES_CON_COSTO.includes(rol)) return products;
 
   return products.map(({ precioCosto, ...resto }) => resto);
+};
+
+export const updateProduct = async (id, data) => {
+  const idProducto = parseNumber(id);
+  const precioCosto = parseNumber(data.precioCosto);
+  const precioVenta = parseNumber(data.precioVenta);
+  const stock = parseNumber(data.stock);
+
+  if (!Number.isInteger(idProducto) || idProducto <= 0) {
+    throw new ProductError("INVALID_ID", "El ID del producto no es válido");
+  }
+
+  const existingProduct = await findProductById(idProducto);
+
+  if (!existingProduct) {
+    throw new ProductError("PRODUCT_NOT_FOUND", "Producto no encontrado");
+  }
+
+  if (
+    !isValidPrice(precioCosto) ||
+    !isValidPrice(precioVenta) ||
+    !isValidCount(stock)
+  ) {
+    throw new ProductError(
+      "INVALID_VALUES",
+      "Los precios deben ser válidos y no negativos; el stock debe ser un entero no negativo"
+    );
+  }
+
+  await updateProductById({
+    idProducto,
+    precioCosto,
+    precioVenta,
+    stock,
+  });
+
+  return {
+    ...existingProduct,
+    precioCosto,
+    precioVenta,
+    stock,
+  };
 };

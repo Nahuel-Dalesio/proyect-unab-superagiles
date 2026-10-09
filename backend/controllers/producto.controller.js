@@ -1,12 +1,15 @@
 import {
   searchProducts,
   registerProduct,
+  updateProduct as updateProductData,
   ProductError,
 } from "../service/producto.service.js";
 
 const PRODUCT_ERROR_STATUS = {
   MISSING_FIELDS: 400,
   INVALID_VALUES: 400,
+  INVALID_ID: 400,
+  PRODUCT_NOT_FOUND: 404,
   DUPLICATE_BARCODE: 409,
 };
 
@@ -49,6 +52,29 @@ export const getProducts = async (req, res) => {
 
     return res.status(500).json({
       message: "Error interno al obtener los productos",
+    });
+  }
+};
+
+export const updateProduct = async (req, res) => {
+  try {
+    const product = await updateProductData(req.params.id, req.body);
+
+    return res.status(200).json({
+      message: "Producto actualizado correctamente",
+      product,
+    });
+  } catch (error) {
+    if (error instanceof ProductError) {
+      return res
+        .status(PRODUCT_ERROR_STATUS[error.code] ?? 400)
+        .json({ message: error.message });
+    }
+
+    console.error("Error al actualizar producto:", error);
+
+    return res.status(500).json({
+      message: "Error interno al actualizar el producto",
     });
   }
 };
