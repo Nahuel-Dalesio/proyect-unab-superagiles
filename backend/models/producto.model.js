@@ -52,3 +52,39 @@ export const createProduct = async ({
 
   return result.insertId;
 };
+
+export const findProductById = async (idProducto) => {
+  const [rows] = await pool.query(
+    `SELECT
+      id_producto AS idProducto,
+      codigo_barras AS codigoBarras,
+      nombre,
+      descripcion,
+      precio_costo AS precioCosto,
+      precio_venta AS precioVenta,
+      stock,
+      stock_minimo AS stockMinimo,
+      activo
+    FROM productos
+    WHERE id_producto = ?`,
+    [idProducto]
+  );
+
+  return rows[0];
+};
+
+export const updateProductById = async ({
+  idProducto,
+  precioCosto,
+  precioVenta,
+  stock,
+}) => {
+  const [result] = await pool.query(
+    `UPDATE productos
+     SET precio_costo = ?, precio_venta = ?, stock = ?
+     WHERE id_producto = ?`,
+    [precioCosto, precioVenta, stock, idProducto]
+  );
+
+  return result.affectedRows;
+};
