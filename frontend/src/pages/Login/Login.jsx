@@ -1,8 +1,8 @@
 import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import { AuthContext } from "../context/AuthContext";
-import { loginRequest } from "../service/auth.service";
-import { showSuccess, showError } from "../utils/alerts";
+import { AuthContext } from "@/context/AuthContext";
+import { loginRequest } from "@/service/auth.service";
+import { showSuccess, showError } from "@/utils/alerts";
 import "./login.css";
 
 const Login = () => {
@@ -48,7 +48,7 @@ const Login = () => {
 
   return (
     <div className="login-page-container">
-      <div className="login-banner-side">
+      <div className="login-banner-side"> 
         <div className="brand-badge">KWIK-E-MART</div>
         <div className="brand-subtitle">Sistema Integral de Gestión</div>
         <p className="brand-caption">

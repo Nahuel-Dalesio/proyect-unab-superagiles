@@ -1,24 +1,22 @@
 import { Routes, Route, Navigate } from "react-router-dom";
-import Login from "../pages/Login";
 import ProtectedRoute from "../components/ProtectedRoute";
 import MainLayout from "../layouts/MainLayout";
-import Caja from "../pages/Caja";
-import Productos from "../pages/Productos";
+import Caja from "../pages/Caja/Caja";
+import LoginForm from "@/components/LoginForm";
+import ProductosTest from "@/pages/Test/ProductosTest";
 
 const AppRoutes = () => {
   return (
     <Routes>
-      {/* Ruta publica */}
-      <Route path="/login" element={<Login />} />
+      {/* Ruta pública */}
+      <Route path="/login" element={<LoginForm />} />
 
-      {/* Rutas con sesion: cualquier rol valido, todas dentro del layout compartido.
-          Las acciones de gestion se ocultan al cajero dentro de cada pantalla. */}
+      {/* Rutas protegidas: requieren sesión iniciada */}
       <Route element={<ProtectedRoute />}>
         <Route element={<MainLayout />}>
-          {/* "Inicio" no existe por ahora: la raiz redirige a Caja */}
           <Route path="/" element={<Navigate to="/caja" replace />} />
           <Route path="/caja" element={<Caja />} />
-          <Route path="/productos" element={<Productos />} />
+          <Route path="/inventario" element={<ProductosTest />} />
           <Route path="*" element={<div>Página no encontrada</div>} />
         </Route>
       </Route>

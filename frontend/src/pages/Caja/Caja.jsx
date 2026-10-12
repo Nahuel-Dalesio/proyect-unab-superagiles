@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Swal from "sweetalert2";
-import { Minus, Plus } from "lucide-react";
-import { getProductos } from "../service/product.service";
-import { showError, showWarning } from "../utils/alerts";
+import { User } from "lucide-react";
+import { getProductos } from "../../service/product.service";
+import { showError, showWarning } from "../../utils/alerts";
+import { Button } from "@/components/ui/button";
+import { CajeroTable } from "@/components/CajeroTable";
 
 // MySQL devuelve los DECIMAL como string, por eso se convierte a número
 const formatoPrecio = (valor) =>
@@ -16,6 +18,8 @@ export default function Caja() {
   const [carrito, setCarrito] = useState([]);
   const [codigo, setCodigo] = useState("");
   const inputRef = useRef(null);
+
+  
 
   const cargarProductos = useCallback(async () => {
     try {
@@ -148,24 +152,29 @@ export default function Caja() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-6xl">
-      <div className="mb-6 flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold">Caja</h1>
-          <p className="text-sm text-muted-foreground">
-            Escaneá los productos o sumalos a mano
-          </p>
+    <div className="flex flex-1 flex-col w-full min-h-0 overflow-hidden">
+      <div className="mb-6 flex shrink-0 items-start justify-between gap-4 max-h-12">
+        <div className=" flex flex-row h-full w-full">
+          <User
+            strokeWidth={1.5}
+            className="size-12 p-2 border border-border rounded-lg bg-card shrink-0"
+          />
+          <div className="px-2">
+              <div className="text-lg font-semibold">Caja</div>
+              <div className="text-muted-foreground">Lista productos agregados</div>
+          </div>
         </div>
-        <button
+        <Button
+          variant="accent"
           type="button"
           onClick={limpiarCaja}
-          className="rounded-md bg-sky-700 px-4 py-2 text-sm font-medium text-white hover:bg-sky-800"
+          className="h-full"
         >
           Limpiar Caja
-        </button>
+        </Button>
       </div>
 
-      <form onSubmit={handleEscaneo} className="mb-4">
+      <form onSubmit={handleEscaneo} className="mb-4 shrink-0">
         <input
           ref={inputRef}
           type="text"
@@ -173,80 +182,29 @@ export default function Caja() {
           value={codigo}
           onChange={(e) => setCodigo(e.target.value)}
           placeholder="Escaneá o escribí el código de barras y apretá Enter..."
-          className="w-full rounded-md border bg-background px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-sky-700/40"
+          className="w-1/4 rounded-md border bg-card px-4 py-2.5 text-sm outline-none"
         />
       </form>
 
-      <div className="overflow-x-auto rounded-lg border bg-background">
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-b text-muted-foreground">
-              <th className="px-4 py-3 font-normal">Nombre</th>
-              <th className="px-4 py-3 font-normal">Código de barras</th>
-              <th className="px-4 py-3 font-normal">Precio</th>
-              <th className="px-4 py-3 text-center font-normal">Cantidad</th>
-              <th className="px-4 py-3 text-right font-normal">Subtotal</th>
-            </tr>
-          </thead>
-          <tbody>
-            {carrito.length === 0 ? (
-              <tr>
-                <td
-                  colSpan={5}
-                  className="px-4 py-10 text-center text-muted-foreground"
-                >
-                  Todavía no hay productos en la caja
-                </td>
-              </tr>
-            ) : (
-              carrito.map((item) => (
-                <tr key={item.idProducto} className="border-b last:border-b-0">
-                  <td className="px-4 py-3">{item.nombre}</td>
-                  <td className="px-4 py-3">{item.codigoBarras}</td>
-                  <td className="px-4 py-3">{formatoPrecio(item.precioVenta)}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center justify-center gap-3">
-                      <button
-                        type="button"
-                        aria-label={`Quitar una unidad de ${item.nombre}`}
-                        onClick={() => cambiarCantidad(item.idProducto, -1)}
-                        className="rounded-md border p-1 hover:bg-muted"
-                      >
-                        <Minus className="size-4" />
-                      </button>
-                      <span className="w-6 text-center">{item.cantidad}</span>
-                      <button
-                        type="button"
-                        aria-label={`Sumar una unidad de ${item.nombre}`}
-                        onClick={() => cambiarCantidad(item.idProducto, 1)}
-                        className="rounded-md border p-1 hover:bg-muted"
-                      >
-                        <Plus className="size-4" />
-                      </button>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-right font-medium">
-                    {formatoPrecio(item.precioVenta * item.cantidad)}
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+      <CajeroTable
+        carrito={carrito}
+        cambiarCantidad={cambiarCantidad}
+        formatoPrecio={formatoPrecio}
+      />
 
-      <div className="mt-6 flex items-stretch gap-3">
-        <div className="flex flex-1 items-center justify-between rounded-md border bg-background px-4 py-2">
+      <div className="mt-4 shrink-0 flex gap-4">
+        <div className="flex flex-1 items-center justify-between rounded-md border bg-card px-4 max-h-10 h-full">
           <span className="text-sm">Total a Pagar</span>
           <span className="text-2xl font-semibold">{formatoPrecio(total)}</span>
         </div>
-        <button
+        <Button
+          variant="accent"
           type="button"
           onClick={calcularCambio}
-          className="rounded-md bg-sky-700 px-5 text-sm font-medium text-white hover:bg-sky-800"
+          className="rounded-md bg-accent px-5 text-sm font-medium text-white hover:accent/85 h-10"
         >
           Calcular Cambio
-        </button>
+        </Button>
       </div>
     </div>
   );

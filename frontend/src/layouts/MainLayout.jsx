@@ -16,10 +16,10 @@ export default function MainLayout() {
 
   return (
     <TooltipProvider>
-      <SidebarProvider>
+      <SidebarProvider className="h-svh overflow-hidden">
         <AppSidebar />
-        <SidebarInset>
-          <header className="flex h-14 shrink-0 items-center justify-between border-b bg-background px-4">
+        <SidebarInset className="h-svh overflow-hidden">
+          <header className="flex h-14 shrink-0 items-center justify-between border-b bg-card px-4">
             <SidebarTrigger />
 
             <div className="flex items-center gap-3">
@@ -33,7 +33,7 @@ export default function MainLayout() {
             </div>
           </header>
 
-          <div className="flex-1 bg-muted/40 p-6">
+          <div className="flex flex-1 flex-col min-h-0 overflow-hidden bg-muted/40 p-6">
             <Outlet />
           </div>
         </SidebarInset>

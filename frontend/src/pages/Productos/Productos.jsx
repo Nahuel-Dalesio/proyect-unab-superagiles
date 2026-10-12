@@ -1,8 +1,8 @@
 import React, { useState, useContext, useEffect, useCallback } from "react";
-import { AuthContext } from "../context/AuthContext";
-import { getProductos, crearProducto } from "../service/product.service";
-import { showSuccess, showError, showWarning } from "../utils/alerts";
-import { ROLES } from "../utils/roles";
+import { AuthContext } from "../../context/AuthContext";
+import { getProductos, crearProducto } from "../../service/product.service";
+import { showSuccess, showError, showWarning } from "../../utils/alerts";
+import { ROLES } from "../../utils/roles";
 import "./Productos.css";
 
 const FORM_INICIAL = {
