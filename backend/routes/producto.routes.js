@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   createProduct,
   getProducts,
+  updateProduct,
 } from "../controllers/producto.controller.js";
 import {
   verifyToken,
@@ -17,6 +18,13 @@ router.post(
   verifyToken,
   authorizeRoles("admin", "encargado"),
   createProduct
+);
+
+router.put(
+  "/productos/:id",
+  verifyToken,
+  authorizeRoles("admin", "encargado"),
+  updateProduct
 );
 
 export default router;
