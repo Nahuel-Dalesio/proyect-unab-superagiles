@@ -1,5 +1,6 @@
 import {
   findProducts,
+  findLowStockProducts,
   findProductByBarcode,
   findProductById,
   createProduct as insertProduct,
@@ -124,6 +125,11 @@ export const searchProducts = async (search, rol) => {
   if (ROLES_CON_COSTO.includes(rol)) return products;
 
   return products.map(({ precioCosto, ...resto }) => resto);
+};
+
+export const getLowStockProducts = async () => {
+  const products = await findLowStockProducts();
+  return products;
 };
 
 export const updateProduct = async (id, data) => {

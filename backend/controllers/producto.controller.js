@@ -1,5 +1,6 @@
 import {
   searchProducts,
+  getLowStockProducts as getLowStockProductsData,
   registerProduct,
   updateProduct as updateProductData,
   ProductError,
@@ -52,6 +53,20 @@ export const getProducts = async (req, res) => {
 
     return res.status(500).json({
       message: "Error interno al obtener los productos",
+    });
+  }
+};
+
+export const getLowStockProducts = async (req, res) => {
+  try {
+    const products = await getLowStockProductsData();
+
+    return res.status(200).json(products);
+  } catch (error) {
+    console.error("Error al obtener productos con stock bajo:", error);
+
+    return res.status(500).json({
+      message: "Error interno al obtener los productos con stock bajo",
     });
   }
 };
