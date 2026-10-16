@@ -167,6 +167,10 @@ export const updateProduct = async (id, data = {}) => {
     changes.stock = parseNumber(data.stock);
   }
 
+  if (data.stockMinimo !== undefined) {
+    changes.stockMinimo = parseNumber(data.stockMinimo);
+  }
+
   if (Object.keys(changes).length === 0) {
     throw new ProductError(
       "MISSING_FIELDS",
@@ -208,11 +212,12 @@ export const updateProduct = async (id, data = {}) => {
   if (
     ("precioCosto" in changes && !isValidPrice(changes.precioCosto)) ||
     ("precioVenta" in changes && !isValidPrice(changes.precioVenta)) ||
-    ("stock" in changes && !isValidCount(changes.stock))
+    ("stock" in changes && !isValidCount(changes.stock)) ||
+    ("stockMinimo" in changes && !isValidCount(changes.stockMinimo))
   ) {
     throw new ProductError(
       "INVALID_VALUES",
-      "Los precios (máx. 2 decimales) deben ser válidos y no negativos; el stock debe ser un entero no negativo"
+      "Los precios (máx. 2 decimales) deben ser válidos y no negativos; el stock y el stock mínimo deben ser enteros no negativos"
     );
   }
 
