@@ -5,6 +5,7 @@ import {
   findProductById,
   createProduct as insertProduct,
   updateProductById,
+  updateActiveProductPricesByPercentage as updatePricesByPercentageInDb,
 } from "../models/producto.model.js";
 
 export class ProductError extends Error {
@@ -245,4 +246,24 @@ export const updateProduct = async (id, data = {}) => {
     ...existingProduct,
     ...changes,
   };
+};
+
+export const updatePricesByPercentage = async (value) => {
+  const porcentaje = parseNumber(value);
+
+  if (
+    !Number.isFinite(porcentaje) ||
+    porcentaje <= 0 ||
+    Number(porcentaje.toFixed(2)) !== porcentaje
+  ) {
+    throw new ProductError(
+      "INVALID_PERCENTAGE",
+      "El porcentaje debe ser un número mayor que 0 y tener como máximo 2 decimales"
+    );
+  }
+
+  const updatedProducts =
+    await updatePricesByPercentageInDb(porcentaje);
+
+  return updatedProducts;
 };
