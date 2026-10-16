@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   createProduct,
   getProducts,
+  getLowStockProducts,
   updateProduct,
 } from "../controllers/producto.controller.js";
 import {
@@ -12,6 +13,13 @@ import {
 const router = Router();
 
 router.get("/productos", verifyToken, getProducts);
+
+router.get(
+  "/productos/stock-bajo",
+  verifyToken,
+  authorizeRoles("admin", "encargado"),
+  getLowStockProducts
+);
 
 router.post(
   "/productos",

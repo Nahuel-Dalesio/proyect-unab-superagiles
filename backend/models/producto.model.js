@@ -34,6 +34,27 @@ export const findProducts = async (search = "") => {
   return rows;
 };
 
+export const findLowStockProducts = async () => {
+  const [rows] = await pool.query(
+    `SELECT
+      id_producto AS idProducto,
+      codigo_barras AS codigoBarras,
+      nombre,
+      descripcion,
+      precio_costo AS precioCosto,
+      precio_venta AS precioVenta,
+      stock,
+      stock_minimo AS stockMinimo,
+      activo
+    FROM productos
+    WHERE activo = true
+      AND stock <= stock_minimo
+    ORDER BY stock ASC, nombre ASC`
+  );
+
+  return rows;
+};
+
 export const createProduct = async ({
   codigoBarras,
   nombre,
