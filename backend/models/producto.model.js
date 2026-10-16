@@ -111,6 +111,8 @@ const UPDATABLE_COLUMNS = {
   precioCosto: "precio_costo",
   precioVenta: "precio_venta",
   stock: "stock",
+  stockMinimo: "stock_minimo",
+
 };
 
 // Actualiza solo los campos que vengan en `changes`.

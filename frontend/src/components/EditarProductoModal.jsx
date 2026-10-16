@@ -32,6 +32,7 @@ export function EditarProductoModal({
     precioCosto: "",
     precioVenta: "",
     stock: "",
+    stockMinimo: "",
   });
   const [guardando, setGuardando] = useState(false);
 
@@ -44,6 +45,7 @@ export function EditarProductoModal({
         precioCosto: producto.precioCosto ?? "",
         precioVenta: producto.precioVenta ?? "",
         stock: producto.stock ?? "",
+        stockMinimo: producto.stockMinimo ?? "",
       });
     }
   }, [producto, open]);
@@ -64,6 +66,7 @@ export function EditarProductoModal({
     const costoNum = Number(form.precioCosto);
     const ventaNum = Number(form.precioVenta);
     const stockNum = Number(form.stock);
+    const stockMinimoNum = Number(form.stockMinimo);
 
     if (!codigoBarras) {
       showWarning("El código de barras no puede quedar vacío.");
@@ -72,7 +75,7 @@ export function EditarProductoModal({
 
     if (codigoBarras.length > MAX_CODIGO_BARRAS) {
       showWarning(
-        `El código de barras admite hasta ${MAX_CODIGO_BARRAS} caracteres.`,
+        `El código de barras admite hasta ${MAX_CODIGO_BARRAS} caracteres.`
       );
       return;
     }
@@ -88,21 +91,19 @@ export function EditarProductoModal({
     }
 
     if (descripcion.length > MAX_DESCRIPCION) {
-      showWarning(`La descripción admite hasta ${MAX_DESCRIPCION} caracteres.`);
+      showWarning(
+        `La descripción admite hasta ${MAX_DESCRIPCION} caracteres.`
+      );
       return;
     }
 
     if (form.precioCosto === "" || isNaN(costoNum) || costoNum < 0) {
-      showWarning(
-        "El precio de costo debe ser un número válido mayor o igual a 0.",
-      );
+      showWarning("El precio de costo debe ser un número válido mayor o igual a 0.");
       return;
     }
 
     if (form.precioVenta === "" || isNaN(ventaNum) || ventaNum < 0) {
-      showWarning(
-        "El precio de venta debe ser un número válido mayor o igual a 0.",
-      );
+      showWarning("El precio de venta debe ser un número válido mayor o igual a 0.");
       return;
     }
 
@@ -116,6 +117,16 @@ export function EditarProductoModal({
       return;
     }
 
+    if (
+      form.stockMinimo === "" ||
+      isNaN(stockMinimoNum) ||
+      stockMinimoNum < 0 ||
+      !Number.isInteger(stockMinimoNum)
+    ) {
+      showWarning("El stock mínimo debe ser un número entero no negativo.");
+      return;
+    }
+
     setGuardando(true);
 
     try {
@@ -126,22 +137,29 @@ export function EditarProductoModal({
         precioCosto: costoNum,
         precioVenta: ventaNum,
         stock: stockNum,
+        stockMinimo: stockMinimoNum,
       });
 
       onOpenChange(false);
       showSuccess(
         `Se actualizaron los datos de "${nombre}".`,
-        "Producto actualizado",
+        "Producto actualizado"
       );
       if (onSuccess) {
         await onSuccess();
       }
     } catch (error) {
       showError(
-        error.status ? error.message : "Error al actualizar el producto",
+        error.status ? error.message : "Error al actualizar el producto"
       );
     } finally {
       setGuardando(false);
+    }
+  };
+
+  const ignorarSiEsCartel = (e) => {
+    if (e.target instanceof Element && e.target.closest(".swal2-container")) {
+      e.preventDefault();
     }
   };
 
@@ -149,22 +167,8 @@ export function EditarProductoModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className="sm:max-w-lg"
-        onInteractOutside={(e) => {
-          if (
-            e.target instanceof Element &&
-            e.target.closest(".swal2-container")
-          ) {
-            e.preventDefault();
-          }
-        }}
-        onFocusOutside={(e) => {
-          if (
-            e.target instanceof Element &&
-            e.target.closest(".swal2-container")
-          ) {
-            e.preventDefault();
-          }
-        }}
+        onInteractOutside={ignorarSiEsCartel}
+        onFocusOutside={ignorarSiEsCartel}
       >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -173,7 +177,7 @@ export function EditarProductoModal({
           </DialogTitle>
           <DialogDescription>
             Modificá los datos del producto: código de barras, nombre,
-            descripción, precios y stock.
+            descripción, precios, stock y stock mínimo.
           </DialogDescription>
         </DialogHeader>
 
@@ -259,19 +263,38 @@ export function EditarProductoModal({
             </div>
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="editStock">Stock disponible (unidades) *</Label>
-            <Input
-              id="editStock"
-              name="stock"
-              type="number"
-              min="0"
-              step="1"
-              placeholder="0"
-              value={form.stock}
-              onChange={(e) => setForm({ ...form, stock: e.target.value })}
-              required
-            />
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="editStock">Stock (unidades) *</Label>
+              <Input
+                id="editStock"
+                name="stock"
+                type="number"
+                min="0"
+                step="1"
+                placeholder="0"
+                value={form.stock}
+                onChange={(e) => setForm({ ...form, stock: e.target.value })}
+                required
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="editStockMinimo">Stock mínimo *</Label>
+              <Input
+                id="editStockMinimo"
+                name="stockMinimo"
+                type="number"
+                min="0"
+                step="1"
+                placeholder="0"
+                value={form.stockMinimo}
+                onChange={(e) =>
+                  setForm({ ...form, stockMinimo: e.target.value })
+                }
+                required
+              />
+            </div>
           </div>
 
           <DialogFooter className="pt-3">
