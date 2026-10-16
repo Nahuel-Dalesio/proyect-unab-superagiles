@@ -3,6 +3,7 @@ import {
   getLowStockProducts as getLowStockProductsData,
   registerProduct,
   updateProduct as updateProductData,
+  updatePricesByPercentage as updatePricesByPercentageData,
   ProductError,
 } from "../service/producto.service.js";
 
@@ -10,6 +11,7 @@ const PRODUCT_ERROR_STATUS = {
   MISSING_FIELDS: 400,
   INVALID_VALUES: 400,
   INVALID_ID: 400,
+  INVALID_PERCENTAGE: 400,
   PRODUCT_NOT_FOUND: 404,
   DUPLICATE_BARCODE: 409,
 };
@@ -96,6 +98,31 @@ export const updateProduct = async (req, res) => {
 
     return res.status(500).json({
       message: "Error interno al actualizar el producto",
+    });
+  }
+};
+
+export const updatePricesByPercentage = async (req, res) => {
+  try {
+    const updatedProducts = await updatePricesByPercentageData(
+      req.body.porcentaje
+    );
+
+    return res.status(200).json({
+      message: "Precios actualizados correctamente",
+      updatedProducts,
+    });
+  } catch (error) {
+    if (error instanceof ProductError) {
+      return res
+        .status(PRODUCT_ERROR_STATUS[error.code] ?? 400)
+        .json({ message: error.message });
+    }
+
+    console.error("Error al actualizar precios por porcentaje:", error);
+
+    return res.status(500).json({
+      message: "Error interno al actualizar los precios",
     });
   }
 };

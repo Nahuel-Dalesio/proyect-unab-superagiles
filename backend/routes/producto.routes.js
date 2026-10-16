@@ -3,6 +3,7 @@ import {
   createProduct,
   getProducts,
   getLowStockProducts,
+  updatePricesByPercentage,
   updateProduct,
 } from "../controllers/producto.controller.js";
 import {
@@ -26,6 +27,13 @@ router.post(
   verifyToken,
   authorizeRoles("admin", "encargado"),
   createProduct
+);
+
+router.put(
+  "/productos/precios/porcentaje",
+  verifyToken,
+  authorizeRoles("admin", "encargado"),
+  updatePricesByPercentage
 );
 
 router.put(

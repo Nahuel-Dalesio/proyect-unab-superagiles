@@ -131,3 +131,14 @@ export const updateProductById = async (idProducto, changes) => {
 
   return result.affectedRows;
 };
+
+export const updateActiveProductPricesByPercentage = async (porcentaje) => {
+  const [result] = await pool.query(
+    `UPDATE productos
+     SET precio_venta = ROUND(precio_venta * (1 + ? / 100), 2)
+     WHERE activo = true`,
+    [porcentaje]
+  );
+
+  return result.affectedRows;
+};
