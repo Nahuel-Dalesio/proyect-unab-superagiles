@@ -14,6 +14,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
+// Mismos límites que el backend (varchar de la tabla `productos`)
+const MAX_CODIGO_BARRAS = 50;
+const MAX_NOMBRE = 100;
+const MAX_DESCRIPCION = 255;
+
 export function EditarProductoModal({
   open,
   onOpenChange,
@@ -21,6 +26,9 @@ export function EditarProductoModal({
   onSuccess,
 }) {
   const [form, setForm] = useState({
+    codigoBarras: "",
+    nombre: "",
+    descripcion: "",
     precioCosto: "",
     precioVenta: "",
     stock: "",
@@ -30,6 +38,9 @@ export function EditarProductoModal({
   useEffect(() => {
     if (producto && open) {
       setForm({
+        codigoBarras: producto.codigoBarras ?? "",
+        nombre: producto.nombre ?? "",
+        descripcion: producto.descripcion ?? "",
         precioCosto: producto.precioCosto ?? "",
         precioVenta: producto.precioVenta ?? "",
         stock: producto.stock ?? "",
@@ -47,17 +58,51 @@ export function EditarProductoModal({
     e.preventDefault();
     if (!producto) return;
 
+    const codigoBarras = form.codigoBarras.trim();
+    const nombre = form.nombre.trim();
+    const descripcion = form.descripcion.trim();
     const costoNum = Number(form.precioCosto);
     const ventaNum = Number(form.precioVenta);
     const stockNum = Number(form.stock);
 
+    if (!codigoBarras) {
+      showWarning("El código de barras no puede quedar vacío.");
+      return;
+    }
+
+    if (codigoBarras.length > MAX_CODIGO_BARRAS) {
+      showWarning(
+        `El código de barras admite hasta ${MAX_CODIGO_BARRAS} caracteres.`,
+      );
+      return;
+    }
+
+    if (!nombre) {
+      showWarning("El nombre no puede quedar vacío.");
+      return;
+    }
+
+    if (nombre.length > MAX_NOMBRE) {
+      showWarning(`El nombre admite hasta ${MAX_NOMBRE} caracteres.`);
+      return;
+    }
+
+    if (descripcion.length > MAX_DESCRIPCION) {
+      showWarning(`La descripción admite hasta ${MAX_DESCRIPCION} caracteres.`);
+      return;
+    }
+
     if (form.precioCosto === "" || isNaN(costoNum) || costoNum < 0) {
-      showWarning("El precio de costo debe ser un número válido mayor o igual a 0.");
+      showWarning(
+        "El precio de costo debe ser un número válido mayor o igual a 0.",
+      );
       return;
     }
 
     if (form.precioVenta === "" || isNaN(ventaNum) || ventaNum < 0) {
-      showWarning("El precio de venta debe ser un número válido mayor o igual a 0.");
+      showWarning(
+        "El precio de venta debe ser un número válido mayor o igual a 0.",
+      );
       return;
     }
 
@@ -75,6 +120,9 @@ export function EditarProductoModal({
 
     try {
       await actualizarProducto(producto.idProducto, {
+        codigoBarras,
+        nombre,
+        descripcion, // vacía => el backend la guarda como NULL
         precioCosto: costoNum,
         precioVenta: ventaNum,
         stock: stockNum,
@@ -82,15 +130,15 @@ export function EditarProductoModal({
 
       onOpenChange(false);
       showSuccess(
-        `Se actualizaron los datos de "${producto.nombre}".`,
-        "Producto actualizado"
+        `Se actualizaron los datos de "${nombre}".`,
+        "Producto actualizado",
       );
       if (onSuccess) {
         await onSuccess();
       }
     } catch (error) {
       showError(
-        error.status ? error.message : "Error al actualizar el producto"
+        error.status ? error.message : "Error al actualizar el producto",
       );
     } finally {
       setGuardando(false);
@@ -99,36 +147,82 @@ export function EditarProductoModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent
+        className="sm:max-w-lg"
+        onInteractOutside={(e) => {
+          if (
+            e.target instanceof Element &&
+            e.target.closest(".swal2-container")
+          ) {
+            e.preventDefault();
+          }
+        }}
+        onFocusOutside={(e) => {
+          if (
+            e.target instanceof Element &&
+            e.target.closest(".swal2-container")
+          ) {
+            e.preventDefault();
+          }
+        }}
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Pencil className="size-5 text-accent" />
             <span>Editar Producto</span>
           </DialogTitle>
           <DialogDescription>
-            Modificá el precio de costo, precio de venta o el stock actual del producto.
+            Modificá los datos del producto: código de barras, nombre,
+            descripción, precios y stock.
           </DialogDescription>
         </DialogHeader>
 
-        {producto && (
-          <div className="rounded-lg border bg-muted/40 p-3 text-xs space-y-1">
-            <div className="flex items-center justify-between">
-              <span className="font-semibold text-sm text-foreground">
-                {producto.nombre}
-              </span>
-              <span className="font-mono bg-card px-2 py-0.5 rounded border text-muted-foreground">
-                {producto.codigoBarras}
-              </span>
-            </div>
-            {producto.descripcion && (
-              <p className="text-muted-foreground line-clamp-1">
-                {producto.descripcion}
-              </p>
-            )}
-          </div>
-        )}
-
         <form onSubmit={handleSubmit} className="space-y-4 py-1">
+          <div className="space-y-1.5">
+            <Label htmlFor="editCodigoBarras">Código de barras *</Label>
+            <Input
+              id="editCodigoBarras"
+              name="codigoBarras"
+              type="text"
+              maxLength={MAX_CODIGO_BARRAS}
+              placeholder="Escaneá o escribí el código"
+              value={form.codigoBarras}
+              onChange={(e) =>
+                setForm({ ...form, codigoBarras: e.target.value })
+              }
+              required
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="editNombre">Nombre *</Label>
+            <Input
+              id="editNombre"
+              name="nombre"
+              type="text"
+              maxLength={MAX_NOMBRE}
+              placeholder="Nombre del producto"
+              value={form.nombre}
+              onChange={(e) => setForm({ ...form, nombre: e.target.value })}
+              required
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="editDescripcion">Descripción</Label>
+            <Input
+              id="editDescripcion"
+              name="descripcion"
+              type="text"
+              maxLength={MAX_DESCRIPCION}
+              placeholder="Opcional"
+              value={form.descripcion}
+              onChange={(e) =>
+                setForm({ ...form, descripcion: e.target.value })
+              }
+            />
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="editPrecioCosto">Precio de costo ($) *</Label>
@@ -175,9 +269,7 @@ export function EditarProductoModal({
               step="1"
               placeholder="0"
               value={form.stock}
-              onChange={(e) =>
-                setForm({ ...form, stock: e.target.value })
-              }
+              onChange={(e) => setForm({ ...form, stock: e.target.value })}
               required
             />
           </div>

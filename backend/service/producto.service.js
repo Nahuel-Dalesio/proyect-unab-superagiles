@@ -132,14 +132,46 @@ export const getLowStockProducts = async () => {
   return products;
 };
 
-export const updateProduct = async (id, data) => {
+// Actualización parcial: solo se modifican los campos que vienen en `data`.
+export const updateProduct = async (id, data = {}) => {
   const idProducto = parseNumber(id);
-  const precioCosto = parseNumber(data.precioCosto);
-  const precioVenta = parseNumber(data.precioVenta);
-  const stock = parseNumber(data.stock);
 
   if (!Number.isInteger(idProducto) || idProducto <= 0) {
     throw new ProductError("INVALID_ID", "El ID del producto no es válido");
+  }
+
+  const changes = {};
+
+  if (data.codigoBarras !== undefined) {
+    changes.codigoBarras = String(data.codigoBarras ?? "").trim();
+  }
+
+  if (data.nombre !== undefined) {
+    changes.nombre = String(data.nombre ?? "").trim();
+  }
+
+  if (data.descripcion !== undefined) {
+    // Vacía o null => NULL (permite borrar la descripción)
+    changes.descripcion = String(data.descripcion ?? "").trim() || null;
+  }
+
+  if (data.precioCosto !== undefined) {
+    changes.precioCosto = parseNumber(data.precioCosto);
+  }
+
+  if (data.precioVenta !== undefined) {
+    changes.precioVenta = parseNumber(data.precioVenta);
+  }
+
+  if (data.stock !== undefined) {
+    changes.stock = parseNumber(data.stock);
+  }
+
+  if (Object.keys(changes).length === 0) {
+    throw new ProductError(
+      "MISSING_FIELDS",
+      "No se envió ningún campo para actualizar"
+    );
   }
 
   const existingProduct = await findProductById(idProducto);
@@ -148,28 +180,64 @@ export const updateProduct = async (id, data) => {
     throw new ProductError("PRODUCT_NOT_FOUND", "Producto no encontrado");
   }
 
+  if ("codigoBarras" in changes && !changes.codigoBarras) {
+    throw new ProductError("MISSING_FIELDS", "El código de barras no puede quedar vacío");
+  }
+
+  if ("nombre" in changes && !changes.nombre) {
+    throw new ProductError("MISSING_FIELDS", "El nombre no puede quedar vacío");
+  }
+
   if (
-    !isValidPrice(precioCosto) ||
-    !isValidPrice(precioVenta) ||
-    !isValidCount(stock)
+    (changes.codigoBarras && changes.codigoBarras.length > MAX_CODIGO_BARRAS) ||
+    (changes.nombre && changes.nombre.length > MAX_NOMBRE)
   ) {
     throw new ProductError(
       "INVALID_VALUES",
-      "Los precios deben ser válidos y no negativos; el stock debe ser un entero no negativo"
+      `El código de barras admite hasta ${MAX_CODIGO_BARRAS} caracteres y el nombre hasta ${MAX_NOMBRE}`
     );
   }
 
-  await updateProductById({
-    idProducto,
-    precioCosto,
-    precioVenta,
-    stock,
-  });
+  if (changes.descripcion && changes.descripcion.length > MAX_DESCRIPCION) {
+    throw new ProductError(
+      "INVALID_VALUES",
+      `La descripción admite hasta ${MAX_DESCRIPCION} caracteres`
+    );
+  }
+
+  if (
+    ("precioCosto" in changes && !isValidPrice(changes.precioCosto)) ||
+    ("precioVenta" in changes && !isValidPrice(changes.precioVenta)) ||
+    ("stock" in changes && !isValidCount(changes.stock))
+  ) {
+    throw new ProductError(
+      "INVALID_VALUES",
+      "Los precios (máx. 2 decimales) deben ser válidos y no negativos; el stock debe ser un entero no negativo"
+    );
+  }
+
+  // Solo se chequea duplicado si el código cambió, excluyendo al propio producto
+  if (
+    changes.codigoBarras &&
+    changes.codigoBarras !== existingProduct.codigoBarras
+  ) {
+    const duplicated = await findProductByBarcode(
+      changes.codigoBarras,
+      idProducto
+    );
+
+    if (duplicated) {
+      throw new ProductError(
+        "DUPLICATE_BARCODE",
+        "Ya existe un producto con ese código de barras"
+      );
+    }
+  }
+
+  await updateProductById(idProducto, changes);
 
   return {
     ...existingProduct,
-    precioCosto,
-    precioVenta,
-    stock,
+    ...changes,
   };
 };

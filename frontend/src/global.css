@@ -139,7 +139,12 @@
     --sidebar-ring: 217 91% 60%; 
     --radius: 6px;
 } 
-
+/* SweetAlert2 sobre los Dialog de Radix: Radix deja pointer-events: none en el body
+   y el cartel (que se monta en el body) lo hereda, por eso no se podía clickear. */
+.swal2-container {
+  pointer-events: auto !important;
+  z-index: 9999 !important;
+}
 
 
 }
