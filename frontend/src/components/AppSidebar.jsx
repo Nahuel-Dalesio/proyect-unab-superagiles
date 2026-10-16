@@ -28,7 +28,7 @@ const MENU_ITEMS = [
     label: "Inventario",
     path: "/inventario",
     icon: Package,
-    roles: [ROLES.ADMIN, ROLES.ENCARGADO, ROLES.CAJERO],
+    roles: [ROLES.ADMIN, ROLES.ENCARGADO],
   },
 ];
 

@@ -3,7 +3,8 @@ import ProtectedRoute from "../components/ProtectedRoute";
 import MainLayout from "../layouts/MainLayout";
 import Caja from "../pages/Caja/Caja";
 import LoginForm from "@/components/LoginForm";
-import ProductosTest from "@/pages/Test/ProductosTest";
+import Productos from "@/pages/Productos/Productos";
+import { ROLES } from "@/utils/roles";
 
 const AppRoutes = () => {
   return (
@@ -16,7 +17,16 @@ const AppRoutes = () => {
         <Route element={<MainLayout />}>
           <Route path="/" element={<Navigate to="/caja" replace />} />
           <Route path="/caja" element={<Caja />} />
-          <Route path="/inventario" element={<ProductosTest />} />
+
+          {/* Solo administradores y encargados pueden acceder a inventario */}
+          <Route
+            element={
+              <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.ENCARGADO]} />
+            }
+          >
+            <Route path="/inventario" element={<Productos />} />
+          </Route>
+
           <Route path="*" element={<div>Página no encontrada</div>} />
         </Route>
       </Route>

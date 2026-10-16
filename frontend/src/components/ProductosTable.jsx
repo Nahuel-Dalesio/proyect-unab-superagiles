@@ -29,7 +29,10 @@ export function ProductosTable({
   onEditarStock,
   formatoPrecio = defaultFormatoPrecio,
   className,
+  esGestor = true,
 }) {
+  const totalColumnas = esGestor ? 6 : 4;
+
   return (
     <div
       className={cn(
@@ -47,25 +50,29 @@ export function ProductosTable({
               <TableHead className="px-4 py-3 font-normal text-foreground">
                 Código de barras
               </TableHead>
-              <TableHead className="px-4 py-3 font-normal text-foreground">
-                Precio costo
-              </TableHead>
+              {esGestor && (
+                <TableHead className="px-4 py-3 font-normal text-foreground">
+                  Precio costo
+                </TableHead>
+              )}
               <TableHead className="px-4 py-3 font-normal text-foreground">
                 Precio venta
               </TableHead>
               <TableHead className="px-4 py-3 font-normal text-foreground">
                 Stock
               </TableHead>
-              <TableHead className="px-4 py-3 font-normal text-foreground text-right">
-                Acciones
-              </TableHead>
+              {esGestor && (
+                <TableHead className="px-4 py-3 font-normal text-foreground text-right">
+                  Acciones
+                </TableHead>
+              )}
             </TableRow>
           </TableHeader>
           <TableBody>
             {inventario.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={6}
+                  colSpan={totalColumnas}
                   className="h-28 text-center text-muted-foreground"
                 >
                   Todavía no hay productos en el inventario
@@ -77,12 +84,14 @@ export function ProductosTable({
                   <TableCell className="px-4 py-3 font-medium">
                     {item.nombre}
                   </TableCell>
-                  <TableCell className="px-4 py-3 text-muted-foreground">
+                  <TableCell className="px-4 py-3 text-muted-foreground font-mono text-xs">
                     {item.codigoBarras}
                   </TableCell>
-                  <TableCell className="px-4 py-3">
-                    {formatoPrecio(item.precioCosto ?? 0)}
-                  </TableCell>
+                  {esGestor && (
+                    <TableCell className="px-4 py-3">
+                      {formatoPrecio(item.precioCosto ?? 0)}
+                    </TableCell>
+                  )}
                   <TableCell className="px-4 py-3 font-medium">
                     {formatoPrecio(item.precioVenta)}
                   </TableCell>
@@ -90,46 +99,48 @@ export function ProductosTable({
                     <span
                       className={cn(
                         "inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium border",
-                        item.stock <= 20
-                          ? "bg-destructive/10 text-destructive border-destructive/20"
+                        item.stock <= (item.stockMinimo ?? 5)
+                          ? "bg-destructive/10 text-destructive border-destructive/20 font-semibold"
                           : "bg-muted text-foreground border-border"
                       )}
                     >
                       {item.stock} u.
                     </span>
                   </TableCell>
-                  <TableCell className="px-4 py-3 text-right">
-                    <div className="flex items-center justify-end">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="size-8 hover:bg-muted text-muted-foreground hover:text-foreground"
-                            aria-label="Opciones de producto"
-                          >
-                            <EllipsisVertical className="size-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-44">
-                          <DropdownMenuItem
-                            onClick={() => onAgregarStock?.(item)}
-                            className="cursor-pointer gap-2"
-                          >
-                            <PackagePlus className="size-4 text-muted-foreground" />
-                            <span>Agregar Stock</span>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => onEditarStock?.(item)}
-                            className="cursor-pointer gap-2"
-                          >
-                            <Pencil className="size-4 text-muted-foreground" />
-                            <span>Editar Stock</span>
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </TableCell>
+                  {esGestor && (
+                    <TableCell className="px-4 py-3 text-right">
+                      <div className="flex items-center justify-end">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-8 hover:bg-muted text-muted-foreground hover:text-foreground"
+                              aria-label="Opciones de producto"
+                            >
+                              <EllipsisVertical className="size-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-48">
+                            <DropdownMenuItem
+                              onClick={() => onAgregarStock?.(item)}
+                              className="cursor-pointer gap-2"
+                            >
+                              <PackagePlus className="size-4 text-accent" />
+                              <span>Agregar Stock</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => onEditarStock?.(item)}
+                              className="cursor-pointer gap-2"
+                            >
+                              <Pencil className="size-4 text-muted-foreground" />
+                              <span>Editar Precios / Stock</span>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </TableCell>
+                  )}
                 </TableRow>
               ))
             )}
