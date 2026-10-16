@@ -15,6 +15,7 @@ export const crearProducto = (producto) =>
   apiRequest("/api/productos", { method: "POST", body: producto });
 
 // PUT /api/productos/:id
-// Actualiza precioCosto, precioVenta y stock. Solo admin y encargado.
+// Actualización parcial: acepta codigoBarras, nombre, descripcion,
+// precioCosto, precioVenta y stock. Solo admin y encargado.
 export const actualizarProducto = (id, producto) =>
-  apiRequest(`/api/productos/${id}`, { method: "PUT", body: producto });
+  apiRequest(`/api/productos/${id}`, { method: "PUT", body: producto });

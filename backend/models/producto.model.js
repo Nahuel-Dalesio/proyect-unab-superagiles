@@ -1,6 +1,15 @@
 import pool from "../bd/conexion.js";
 
-export const findProductByBarcode = async (codigoBarras) => {
+export const findProductByBarcode = async (codigoBarras, excludeId = null) => {
+  if (excludeId !== null) {
+    const [rows] = await pool.query(
+      "SELECT * FROM productos WHERE codigo_barras = ? AND id_producto <> ?",
+      [codigoBarras, excludeId]
+    );
+
+    return rows[0];
+  }
+
   const [rows] = await pool.query(
     "SELECT * FROM productos WHERE codigo_barras = ?",
     [codigoBarras]
@@ -8,7 +17,6 @@ export const findProductByBarcode = async (codigoBarras) => {
 
   return rows[0];
 };
-
 
 export const findProducts = async (search = "") => {
   const searchPattern = `%${search}%`;
@@ -94,17 +102,29 @@ export const findProductById = async (idProducto) => {
   return rows[0];
 };
 
-export const updateProductById = async ({
-  idProducto,
-  precioCosto,
-  precioVenta,
-  stock,
-}) => {
+// Lista fija: campo del service -> columna de la tabla.
+// Solo estas columnas se pueden actualizar.
+const UPDATABLE_COLUMNS = {
+  codigoBarras: "codigo_barras",
+  nombre: "nombre",
+  descripcion: "descripcion",
+  precioCosto: "precio_costo",
+  precioVenta: "precio_venta",
+  stock: "stock",
+};
+
+// Actualiza solo los campos que vengan en `changes`.
+export const updateProductById = async (idProducto, changes) => {
+  const fields = Object.keys(changes).filter((key) => key in UPDATABLE_COLUMNS);
+
+  if (fields.length === 0) return 0;
+
+  const setClause = fields.map((key) => `${UPDATABLE_COLUMNS[key]} = ?`).join(", ");
+  const values = fields.map((key) => changes[key]);
+
   const [result] = await pool.query(
-    `UPDATE productos
-     SET precio_costo = ?, precio_venta = ?, stock = ?
-     WHERE id_producto = ?`,
-    [precioCosto, precioVenta, stock, idProducto]
+    `UPDATE productos SET ${setClause} WHERE id_producto = ?`,
+    [...values, idProducto]
   );
 
   return result.affectedRows;
