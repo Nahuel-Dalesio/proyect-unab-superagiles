@@ -5,6 +5,7 @@ import { getProductos } from "../../service/product.service";
 import { showError, showWarning } from "../../utils/alerts";
 import { Button } from "@/components/ui/button";
 import { CajeroTable } from "@/components/CajeroTable";
+import CalculadoraCambio from "@/components/CalculadoraCambio";
 
 // MySQL devuelve los DECIMAL como string, por eso se convierte a número
 const formatoPrecio = (valor) =>
@@ -17,6 +18,7 @@ export default function Caja() {
   const [productos, setProductos] = useState([]);
   const [carrito, setCarrito] = useState([]);
   const [codigo, setCodigo] = useState("");
+  const [modalCalculadoraOpen, setModalCalculadoraOpen] = useState(false);
   const inputRef = useRef(null);
 
   
@@ -115,40 +117,12 @@ export default function Caja() {
     enfocar();
   };
 
-  const calcularCambio = async () => {
+  const abrirCalculadora = () => {
     if (carrito.length === 0) {
       showWarning("Agregá productos antes de calcular el cambio.");
       return;
     }
-
-    const { value, isConfirmed } = await Swal.fire({
-      title: "Calcular cambio",
-      html: `Total a pagar: <b>${formatoPrecio(total)}</b>`,
-      input: "number",
-      inputLabel: "Monto recibido",
-      inputAttributes: { min: 0, step: "0.01" },
-      showCancelButton: true,
-      confirmButtonText: "Calcular",
-      cancelButtonText: "Cancelar",
-    });
-
-    if (!isConfirmed) {
-      enfocar();
-      return;
-    }
-
-    const cambio = Number(value) - total;
-
-    if (cambio < 0) {
-      await Swal.fire(
-        "Falta dinero",
-        `Faltan ${formatoPrecio(Math.abs(cambio))}`,
-        "warning"
-      );
-    } else {
-      await Swal.fire("Cambio", `Devolver ${formatoPrecio(cambio)}`, "success");
-    }
-    enfocar();
+    setModalCalculadoraOpen(true);
   };
 
   return (
@@ -200,12 +174,24 @@ export default function Caja() {
         <Button
           variant="accent"
           type="button"
-          onClick={calcularCambio}
+          onClick={abrirCalculadora}
           className="rounded-md bg-accent px-5 text-sm font-medium text-white hover:accent/85 h-10"
         >
           Calcular Cambio
         </Button>
       </div>
+
+      <CalculadoraCambio
+        open={modalCalculadoraOpen}
+        onOpenChange={(abierto) => {
+          setModalCalculadoraOpen(abierto);
+          if (!abierto) {
+            enfocar();
+          }
+        }}
+        total={total}
+        formatoPrecio={formatoPrecio}
+      />
     </div>
   );
 }
