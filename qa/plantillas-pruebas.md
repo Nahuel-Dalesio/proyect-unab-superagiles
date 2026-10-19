@@ -83,3 +83,39 @@
 | **Responsable Diseño** | Federico Siboldi |
 | **Responsable Ejecución** | Federico Siboldi |
 | **Comentarios** | Valida el acceso total sin restricciones para el usuario Administrador.
+
+### Script de Prueba 05
+| Campo | Detalle |
+| :--- | :--- |
+| **ID de Caso de Prueba** | TC-POS-003 |
+| **Nombre de Caso de prueba** | Incremento manual de cantidad en ítem del carrito |
+| **Descripción** | Se probará que al presionar el botón `+` en una fila del changuito se incremente la cantidad solicitada y se actualice el total de la venta. |
+| **Precondiciones** | 1. Pantalla `/caja` activa.<br>2. Producto cargado previamente con cantidad 2. |
+| **Relaciones Casos de uso** | CU: Modificar carrito / HU-12: Edicion y eliminacion de items del carrito (Issue #12) |
+| **Pasos y condiciones ejecución** | 1. Localizar la fila del producto Aceite Girasol Cocinero 900ml.<br>2. Hacer clic sobre el botón `+` de la columna Cantidad. |
+| **Resultado Esperado** | El contador aumenta a 3 unidades y el subtotal/total se recalcula en base al nuevo valor. |
+| **Estado Caso de Prueba** | [x] Exitoso  /  [ ] Fallido  /  [ ] Frenado  /  [ ] Pendiente |
+| **Resultado Obtenido** | Al hacer clic sobre el botón `+`, la cantidad del ítem se incrementó inmediatamente de 2 a 3 unidades, recalculando el subtotal y el total a pagar de forma dinámica.<br><br>![Incrementar Cantidad](./img/tc-pos-003-incrementar-cantidad.png) |
+| **Errores Asociados** | Ninguno. |
+| **Responsable Diseño** | Federico Siboldi |
+| **Responsable Ejecución** | Federico Siboldi |
+| **Comentarios** | Cumple con los criterios de edición previa al cobro del Sprint 3. |
+
+---
+
+### Script de Prueba 06
+| Campo | Detalle |
+| :--- | :--- |
+| **ID de Caso de Prueba** | TC-POS-004 |
+| **Nombre de Caso de prueba** | Cálculo exacto de vuelto / cambio en cobro |
+| **Descripción** | Se probará que al ingresar el importe entregado por el cliente en efectivo, el sistema determine e informe en pantalla el cambio exacto a devolver. |
+| **Precondiciones** | 1. Carrito con productos (3 unidades de Aceite Cocinero, total $7.050,00).<br>2. Monto ingresado mayor al total a pagar ($10.000,00). |
+| **Relaciones Casos de uso** | CU: Cobro en Caja / HU-13: Cobro y calculo de vuelto (Issue #13) |
+| **Pasos y condiciones ejecución** | 1. Presionar el botón "Calcular Cambio".<br>2. Ingresar el importe con el que abona el cliente ($10.000,00).<br>3. Confirmar la acción. |
+| **Resultado Esperado** | Despliegue de modal informativo indicando el importe a devolver: $2.950,00. |
+| **Estado Caso de Prueba** | [x] Exitoso  /  [ ] Fallido  /  [ ] Frenado  /  [ ] Pendiente |
+| **Resultado Obtenido** | Al presionar el botón "Calcular Cambio" e ingresar el pago recibido, el sistema desplegó el modal informativo indicando con precisión matemática: "Cambio - Devolver $2.950,00".<br><br>![Cálculo de Cambio y Vuelto](./img/tc-pos-004-modal-cambio-vuelto.png) |
+| **Errores Asociados** | Ninguno. |
+| **Responsable Diseño** | Federico Siboldi |
+| **Responsable Ejecución** | Federico Siboldi |
+| **Comentarios** | Valida el cálculo automático de vuelto del Sprint 3. |
