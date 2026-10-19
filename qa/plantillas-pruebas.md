@@ -42,6 +42,43 @@
 | **Estado Caso de Prueba** | [x] Exitoso  /  [ ] Fallido  /  [ ] Frenado  /  [ ] Pendiente |
 | **Resultado Obtenido** | El administrador visualiza "Inventario" en la barra lateral. Al ingresar a `/inventario`, se despliega correctamente la tabla completa con precios de costo, precio venta, stock y botón de nuevo producto.<br><br>![Admin Inventario](./img/tc-auth-002-admin-inventario.png) |
 
+
+
+### Script de Prueba 03
+| Campo | Detalle |
+| :--- | :--- |
+| **ID de Caso de Prueba** | TC-POS-001 |
+| **Nombre de Caso de prueba** | Carga rápida de producto mediante escaneo/código y tecla Enter |
+| **Descripción** | Se probará que al tipear el código de barras y presionar Enter el producto se agregue de inmediato a la tabla con cantidad 1, precio unitario y foco listo para el siguiente producto. |
+| **Precondiciones** | 1. Sesión activa en la pantalla `/caja`.<br>2. Producto registrado en base de datos (`7790070112345` - Aceite Girasol Cocinero 900ml). |
+| **Relaciones Casos de uso** | CU: Registrar venta en Caja / HU-10: Escaneo rápido con lector de código de barras (Issue #10) |
+| **Pasos y condiciones ejecución** | 1. Posicionar el cursor en el buscador de código de barras.<br>2. Tipear `7790070112345`.<br>3. Presionar la tecla Enter sin interacción con el mouse. |
+| **Resultado Esperado** | El producto ingresa automáticamente a la tabla con precio de venta ($2.350,00), cantidad 1 y subtotal. El campo de texto queda despejado/enfocado para el siguiente ítem. |
+| **Estado Caso de Prueba** | [x] Exitoso  /  [ ] Fallido  /  [ ] Frenado  /  [ ] Pendiente |
+| **Resultado Obtenido** | El producto ingresa de inmediato en la tabla con precio de venta y cantidad 1. El buscador queda limpio y listo para ingresar un nuevo código.<br><br>![Evidencia Escaneo Enter](./img/tc-pos-001-escaneo-enter.png) |
+| **Errores Asociados** | Ninguno. |
+| **Responsable Diseño** | Federico Siboldi |
+| **Responsable Ejecución** | Federico Siboldi |
+| **Comentarios** | Cumple con el criterio de agilidad del Sprint 3 ("sin tener que usar el mouse"). |
+
+---
+
+### Script de Prueba 04
+| Campo | Detalle |
+| :--- | :--- |
+| **ID de Caso de Prueba** | TC-POS-002 |
+| **Nombre de Caso de prueba** | Agrupación de producto escaneado de forma reiterada |
+| **Descripción** | Se probará que al escanear nuevamente un producto ya presente en la caja no se genere una fila duplicada, sino que se incremente la cantidad y se recalcule el subtotal. |
+| **Precondiciones** | 1. Pantalla `/caja` activa.<br>2. Producto `7790070112345` previamente cargado con cantidad 1. |
+| **Relaciones Casos de uso** | CU: Registrar venta en Caja / HU-11: Suma de cantidad por producto repetido (Issue #11) |
+| **Pasos y condiciones ejecución** | 1. Ingresar nuevamente en el buscador el código `7790070112345`.<br>2. Presionar la tecla Enter. |
+| **Resultado Esperado** | No se añade una fila nueva. La fila existente actualiza su columna de cantidad a 2 y el subtotal refleja el cálculo correcto ($4.700,00). |
+| **Estado Caso de Prueba** | [x] Exitoso  /  [ ] Fallido  /  [ ] Frenado  /  [ ] Pendiente |
+| **Resultado Obtenido** | Al ingresar el código nuevamente se mantiene en una sola fila, cambia a cantidad 2 y realiza el cálculo de subtotal a $4.700,00. |
+| **Errores Asociados** | Ninguno. |
+| **Responsable Diseño** | Federico Siboldi |
+| **Responsable Ejecución** | Federico Siboldi |
+| **Comentarios** | Cumple con el criterio del Sprint 3 ("si escaneo el mismo alfajor dos veces, que sume cantidad en vez de llenar la pantalla de filas"). |
 | **Errores Asociados** | Ninguno. |
 | **Responsable Diseño** | Federico Siboldi |
 | **Responsable Ejecución** | Federico Siboldi |
