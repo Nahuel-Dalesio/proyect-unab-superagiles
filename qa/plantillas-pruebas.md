@@ -119,3 +119,20 @@
 | **Responsable Diseño** | Federico Siboldi |
 | **Responsable Ejecución** | Federico Siboldi |
 | **Comentarios** | Valida el cálculo automático de vuelto del Sprint 3. |
+
+### Script de Prueba 07
+| Campo | Detalle |
+| :--- | :--- |
+| **ID de Caso de Prueba** | TC-POS-005 |
+| **Nombre de Caso de prueba** | Validación de límite de stock disponible al incrementar cantidad en Caja |
+| **Descripción** | Se probará que el botón `+` en la pantalla de Caja no permita agregar más unidades que las existentes en el inventario para el producto seleccionado. |
+| **Precondiciones** | 1. Sesión activa en `/caja`.<br>2. Producto con stock finito en base de datos (`Aceite Girasol Cocinero 900ml` con stock = 20). |
+| **Relaciones Casos de uso** | CU: Modificar carrito / Issue #63: POS: el botón + del ticket permite superar el stock disponible |
+| **Pasos y condiciones ejecución** | 1. Cargar el producto `7790070112345` en la caja.<br>2. Presionar consecutivamente el botón `+` hasta alcanzar las 20 unidades.<br>3. Intentar presionar nuevamente el botón `+` para solicitar 21 unidades. |
+| **Resultado Esperado** | El sistema debe impedir superar las 20 unidades y notificar al operador mediante un mensaje de alerta. |
+| **Estado Caso de Prueba** | [x] Exitoso  /  [ ] Fallido  /  [ ] Frenado  /  [ ] Pendiente |
+| **Resultado Obtenido** | El contador se frena en 20 unidades y se despliega el modal de advertencia: "Atención: Solo quedan 20 unidades de Aceite Girasol Cocinero 900ml.", impidiendo superar el stock disponible.<br><br>![Evidencia Límite de Stock](./img/tc-pos-005-limite-stock.png) |
+| **Errores Asociados** | Ninguno. Valida la corrección del defecto reportado en la Issue #63. |
+| **Responsable Diseño** | Federico Siboldi |
+| **Responsable Ejecución** | Federico Siboldi |
+| **Comentarios** | El comportamiento responde satisfactoriamente a la restricción de stock disponible. |
