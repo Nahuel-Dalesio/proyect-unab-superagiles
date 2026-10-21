@@ -136,3 +136,20 @@
 | **Responsable Diseño** | Federico Siboldi |
 | **Responsable Ejecución** | Federico Siboldi |
 | **Comentarios** | El comportamiento responde satisfactoriamente a la restricción de stock disponible. |
+
+### Script de Prueba 08
+| Campo | Detalle |
+| :--- | :--- |
+| **ID de Caso de Prueba** | TC-MOB-001 |
+| **Nombre de Caso de prueba** | Visualización y usabilidad mobile en Caja e Inventario (viewport 393px) |
+| **Descripción** | Se probará la adaptabilidad responsiva, visualización y usabilidad de los paneles de Caja (/caja) e Inventario (/inventario) bajo resolución móvil simulada (iPhone 16 / 393x852). |
+| **Precondiciones** | 1. Sesión activa en el sistema.<br>2. Acceso a rutas `/caja` e `/inventario`.<br>3. Emulación responsive activada en navegador mediante DevTools (ancho 393px). |
+| **Relaciones Casos de uso** | CU: Gestión de Productos y POS / Issue #37: Prueba manual en mobile (Chrome DevTools o celular real) |
+| **Pasos y condiciones ejecución** | 1. Iniciar sesión y navegar hacia `/caja` e `/inventario`.<br>2. Activar DevTools (F12) con emulación iPhone 16 (393px).<br>3. Verificar alineación de controles, visibilidad de tablas, inputs de búsqueda y botones de acción. |
+| **Resultado Esperado** | La interfaz debe adaptarse fluidamente a pantallas pequeñas sin truncar datos esenciales, manteniendo los botones operables y permitiendo visualizar columnas críticas. |
+| **Estado Caso de Prueba** | [ ] Exitoso  /  [x] Fallido  /  [ ] Frenado  /  [ ] Pendiente |
+| **Resultado Obtenido** | Los botones de acción rápida (+ Nuevo Producto, Limpiar Caja, Calcular Cambio) se adaptan y resultan clickeables. No obstante, se detectan fallas responsivas: en Caja el placeholder de escaneo y los encabezados quedan apretados; en Inventario la tabla se corta ocultando las columnas de Costo, Precio Venta y Stock fuera del viewport visible.<br><br>**Evidencia 1 - Pantalla de Caja en mobile:**<br>![Caja Mobile](./img/tc-mob-001-caja-responsive.png)<br><br>**Evidencia 2 - Pantalla de Inventario en mobile:**<br>![Inventario Mobile](./img/tc-mob-002-inventario-responsive.png) |
+| **Errores Asociados** | Defecto de diseño responsive en tablas y campos de texto (documentado para Issue #37). |
+| **Responsable Diseño** | Federico Siboldi |
+| **Responsable Ejecución** | Federico Siboldi |
+| **Comentarios** | Requiere incorporar `overflow-x-auto` en las tablas o implementar diseño de tarjetas (cards) para resoluciones menores a 640px. |
