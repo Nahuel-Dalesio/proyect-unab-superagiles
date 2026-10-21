@@ -153,3 +153,20 @@
 | **Responsable Diseño** | Federico Siboldi |
 | **Responsable Ejecución** | Federico Siboldi |
 | **Comentarios** | Requiere incorporar `overflow-x-auto` en las tablas o implementar diseño de tarjetas (cards) para resoluciones menores a 640px. |
+
+### Script de Prueba 10
+| Campo | Detalle |
+| :--- | :--- |
+| **ID de Caso de Prueba** | TC-INV-001 |
+| **Nombre de Caso de prueba** | Alta de nuevo producto en catálogo de inventario |
+| **Descripción** | Se validará que un usuario con rol Administrador pueda dar de alta un nuevo producto mediante el formulario "+ Nuevo Producto" y que este persista correctamente en la base de datos y la tabla de inventario. |
+| **Precondiciones** | 1. Sesión activa con rol Administrador (`admin`).<br>2. Navegación en `/inventario` en resolución de escritorio. |
+| **Relaciones Casos de uso** | CU: Gestión de Productos / Sprint 2: Catálogo e Inventario |
+| **Pasos y condiciones ejecución** | 1. Ingresar a `/inventario` como `admin`.<br>2. Hacer clic en el botón "+ Nuevo Producto".<br>3. Completar los campos requeridos (nombre, código de barras, costo, precio venta, stock inicial).<br>4. Guardar el formulario y refrescar la página (F5). |
+| **Resultado Esperado** | El producto debe quedar registrado en base de datos y mostrarse en el listado general con sus atributos correctos. |
+| **Estado Caso de Prueba** | [x] Exitoso  /  [ ] Fallido  /  [ ] Frenado  /  [ ] Pendiente |
+| **Resultado Obtenido** | El formulario permite la carga y el nuevo ítem se visualiza inmediatamente en la tabla de inventario, manteniendo la persistencia tras recargar.<br><br>![Evidencia Alta Producto](./img/tc-inv-001-alta-producto.png) |
+| **Errores Asociados** | Ninguno en el alta. (Nota: el descuento posterior por venta en POS requiere la resolución de la Issue #65). |
+| **Responsable Diseño** | Federico Siboldi |
+| **Responsable Ejecución** | Federico Siboldi |
+| **Comentarios** | El alta de productos en el catálogo está operativa. |
