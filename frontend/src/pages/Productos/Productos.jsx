@@ -146,6 +146,34 @@ export default function Productos() {
     setModalStockAbierto(true);
   };
 
+  const handleToggleActivo = (idProducto) => {
+    setInventario((prev) =>
+      prev.map((item) => {
+        const idActual = item.idProducto ?? item.id_producto;
+        if (idActual === idProducto) {
+          const nuevoEstado = !(item.activo ?? true);
+          showSuccess(
+            `Producto "${item.nombre}" ${
+              nuevoEstado ? "activado" : "desactivado"
+            } correctamente.`,
+            "Estado actualizado"
+          );
+          return { ...item, activo: nuevoEstado };
+        }
+        return item;
+      })
+    );
+    setProductos((prev) =>
+      prev.map((item) => {
+        const idActual = item.idProducto ?? item.id_producto;
+        if (idActual === idProducto) {
+          return { ...item, activo: !(item.activo ?? true) };
+        }
+        return item;
+      })
+    );
+  };
+
   const productosFiltrados = (inventario || []).filter((item) => {
     const term = codigo.toLowerCase().trim();
     if (!term) return true;
@@ -201,6 +229,7 @@ export default function Productos() {
         formatoPrecio={formatoPrecio}
         onAgregarStock={abrirModalStock}
         onEditarStock={abrirModalEditar}
+        onToggleActivo={handleToggleActivo}
         esGestor={esGestor}
       />
 

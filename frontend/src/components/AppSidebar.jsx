@@ -1,6 +1,6 @@
 import { useContext } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { LogOut, Package, ShoppingCart, Store } from "lucide-react";
+import { LogOut, Package, ShoppingCart, Store, UserCheck, Users } from "lucide-react";
 import { AuthContext } from "@/context/AuthContext";
 import { ROLES } from "@/utils/roles";
 import {
@@ -28,6 +28,18 @@ const MENU_ITEMS = [
     label: "Inventario",
     path: "/inventario",
     icon: Package,
+    roles: [ROLES.ADMIN, ROLES.ENCARGADO],
+  },
+  {
+    label: "Clientes",
+    path: "/clientes",
+    icon: UserCheck,
+    roles: [ROLES.ADMIN, ROLES.ENCARGADO, ROLES.CAJERO],
+  },
+  {
+    label: "Usuarios",
+    path: "/usuarios",
+    icon: Users,
     roles: [ROLES.ADMIN, ROLES.ENCARGADO],
   },
 ];
