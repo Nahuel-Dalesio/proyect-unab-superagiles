@@ -13,10 +13,10 @@ Proyecto desarrollado para la materia de la Universidad Nacional Guillermo Brown
 | Nahuel Dalesio | Scrum Master |
 | Agustín (agustinrd) | Backend |
 | Alfredo Ramírez (alfredoramirez2021) | Frontend |
-| Federico (fedesiboldim) | Frontend |
+| Federico (fedesiboldim) | QA |
 | Javier (javisoundgarden) | Backend |
 | Karen Belén Pérez (karenbelenperez) | Documentación |
-| Marcos Bayget (marcosbayget) | UX/UI y QA |
+| Marcos Bayget (marcosbayget) | UX/UI y Frontend |
 
 **Product Owner:** la profesora de la cátedra.
 
