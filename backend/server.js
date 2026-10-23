@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import authRoutes from "./routes/auth.routes.js";
 import productRoutes from "./routes/producto.routes.js";
 import cajaRoutes from "./routes/caja.routes.js";
+import ventasRoutes from "./routes/ventas.routes.js";
 
 dotenv.config();
 
@@ -19,6 +20,7 @@ app.use(express.json()); // permite leer JSON en el body de los requests
 app.use("/api", authRoutes);
 app.use("/api", productRoutes);
 app.use("/api", cajaRoutes);
+app.use("/api", ventasRoutes);
 
 // Ruta de prueba simple para verificar que el server esta vivo
 app.get("/", (req, res) => {
