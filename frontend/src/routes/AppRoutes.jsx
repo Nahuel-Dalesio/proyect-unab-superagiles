@@ -19,7 +19,7 @@ const AppRoutes = () => {
         <Route element={<MainLayout />}>
           <Route path="/" element={<Navigate to="/caja" replace />} />
           <Route path="/caja" element={<Caja />} />
-          <Route path="/clientes" element={<Clientes />} />
+          {/* <Route path="/clientes" element={<Clientes />} /> */}
 
           {/* Solo administradores y encargados pueden acceder a inventario y usuarios */}
           <Route
@@ -28,7 +28,8 @@ const AppRoutes = () => {
             }
           >
             <Route path="/inventario" element={<Productos />} />
-            <Route path="/usuarios" element={<Usuarios />} />
+            {/* <Route path="/usuarios" element={<Usuarios />} /> */}
+            
           </Route>
 
           <Route path="*" element={<div>Página no encontrada</div>} />
@@ -38,4 +39,6 @@ const AppRoutes = () => {
   );
 };
 
+
 export default AppRoutes;
+
