@@ -13,7 +13,12 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // --- Middlewares base ---
-app.use(cors()); // habilita requests desde el frontend (Vite corre en otro puerto)
+app.use(
+  cors({
+    origin: process.env.CORS_ORIGIN,
+  })
+); // permite requests solo desde el origen configurado
+
 app.use(express.json()); // permite leer JSON en el body de los requests
 
 // --- Rutas ---
