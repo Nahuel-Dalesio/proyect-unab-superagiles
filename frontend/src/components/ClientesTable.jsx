@@ -36,7 +36,7 @@ export function ClientesTable({
           <TableHeader className="sticky top-0 z-10 bg-card shadow-xs [&_th]:bg-card">
             <TableRow className="hover:bg-transparent border-b">
               {/* Primer columna con el Switch para activar o desactivar */}
-              <TableHead className="px-4 py-3 font-normal text-foreground w-28 whitespace-nowrap">
+              <TableHead className="px-4 py-3 font-normal text-foreground w-20 whitespace-nowrap">
                 Estado
               </TableHead>
               <TableHead className="px-4 py-3 font-normal text-foreground whitespace-nowrap">
@@ -80,22 +80,12 @@ export function ClientesTable({
                 >
                   {/* Primer columna: Switch para activar o desactivar */}
                   <TableCell className="px-4 py-3">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center">
                       <Switch
                         checked={item.activo}
                         onCheckedChange={() => onToggleActivo?.(item.id_cliente)}
                         aria-label={`Cambiar estado de ${item.nombre} ${item.apellido}`}
                       />
-                      <span
-                        className={cn(
-                          "text-xs font-medium inline-flex items-center gap-1",
-                          item.activo
-                            ? "text-emerald-600 dark:text-emerald-400"
-                            : "text-muted-foreground"
-                        )}
-                      >
-                        {item.activo ? "Activo" : "Inactivo"}
-                      </span>
                     </div>
                   </TableCell>
 

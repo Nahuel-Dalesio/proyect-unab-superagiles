@@ -54,7 +54,7 @@ export function ProductosTable({
           <TableHeader className="sticky top-0 z-10 bg-card shadow-xs [&_th]:bg-card">
             <TableRow className="hover:bg-transparent border-b">
               {/* Primer columna con el Switch para activar o desactivar */}
-              <TableHead className="px-4 py-3 font-normal text-foreground w-28 whitespace-nowrap">
+              <TableHead className="px-4 py-3 font-normal text-foreground w-20 whitespace-nowrap">
                 Estado
               </TableHead>
               <TableHead className="px-4 py-3 font-normal text-foreground whitespace-nowrap">
@@ -106,22 +106,12 @@ export function ProductosTable({
                   >
                     {/* Primer columna: Switch para activar o desactivar */}
                     <TableCell className="px-4 py-3 whitespace-nowrap">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center">
                         <Switch
                           checked={isActivo}
                           onCheckedChange={() => onToggleActivo?.(id)}
                           aria-label={`Cambiar estado de ${item.nombre}`}
                         />
-                        <span
-                          className={cn(
-                            "text-xs font-medium inline-flex items-center gap-1",
-                            isActivo
-                              ? "text-emerald-600 dark:text-emerald-400"
-                              : "text-muted-foreground"
-                          )}
-                        >
-                          {isActivo ? "Activo" : "Inactivo"}
-                        </span>
                       </div>
                     </TableCell>
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Swal from "sweetalert2";
 import { showWarning } from "@/utils/alerts";
-import { RotateCcw } from "lucide-react";
+import { Banknote, CreditCard, Landmark, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +16,12 @@ import RegistroCliente from "@/components/RegistroCliente";
 
 const BILLETES = [20000, 10000, 5000, 2000, 1000, 500, 200, 100];
 
+const MEDIOS_PAGO = [
+  { id: "efectivo", label: "Efectivo", icon: Banknote },
+  { id: "transferencia", label: "Transferencia", icon: Landmark },
+  { id: "tarjeta", label: "Tarjeta", icon: CreditCard },
+];
+
 export default function CalculadoraCambio({
   open,
   onOpenChange,
@@ -23,15 +29,26 @@ export default function CalculadoraCambio({
   formatoPrecio,
   onExito,
 }) {
+  const [medioPago, setMedioPago] = useState("efectivo");
   const [recibido, setRecibido] = useState("");
   const [emitirFactura, setEmitirFactura] = useState(false);
 
+  const esEfectivo = medioPago === "efectivo";
+
   useEffect(() => {
     if (open) {
+      setMedioPago("efectivo");
       setRecibido("");
       setEmitirFactura(false);
     }
   }, [open]);
+
+  const handleSeleccionarMedioPago = (nuevoMedio) => {
+    setMedioPago(nuevoMedio);
+    if (nuevoMedio !== "efectivo") {
+      setRecibido("");
+    }
+  };
 
   const format = formatoPrecio || ((val) =>
     `$${Number(val || 0).toLocaleString("es-AR", {
@@ -45,6 +62,18 @@ export default function CalculadoraCambio({
 
   const handleCalcular = async (e) => {
     e?.preventDefault();
+
+    if (!esEfectivo) {
+      await Swal.fire({
+        title: "Pago confirmado",
+        text: `Cobro por ${format(total)} mediante ${medioPago}. No requiere devolver cambio.`,
+        icon: "success",
+      });
+      onOpenChange?.(false);
+      onExito?.({ medioPago, montoRecibido: total, cambio: 0 });
+      return;
+    }
+
     const montoRecibido = Number(recibido);
 
     if (!recibido || isNaN(montoRecibido) || montoRecibido <= 0) {
@@ -67,11 +96,12 @@ export default function CalculadoraCambio({
         icon: "success",
       });
       onOpenChange?.(false);
-      onExito?.();
+      onExito?.({ medioPago, montoRecibido, cambio });
     }
   };
 
   const handleSumarBillete = (valor) => {
+    if (!esEfectivo) return;
     setRecibido((prev) => {
       const actual = Number(prev) || 0;
       return (actual + valor).toString();
@@ -100,23 +130,49 @@ export default function CalculadoraCambio({
           </div>
 
           <div>
+            <Label className="mb-1 block">Medio de pago</Label>
+            <div className="grid grid-cols-3 gap-2">
+              {MEDIOS_PAGO.map(({ id, label, icon: Icon }) => {
+                const seleccionado = medioPago === id;
+                return (
+                  <Button
+                    key={id}
+                    type="button"
+                    variant={seleccionado ? "accent" : "outline"}
+                    onClick={() => handleSeleccionarMedioPago(id)}
+                    className="h-10 w-full max-w-none flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <Icon className="size-4" />
+                    <span>{label}</span>
+                  </Button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div>
             <Label className="mb-1 block">Recibido</Label>
             <div className="flex gap-2">
               <Input
                 type="number"
                 step="0.01"
                 min="0"
-                placeholder="0.00"
-                autoFocus
+                placeholder={
+                  esEfectivo
+                    ? "0.00"
+                    : "No aplica para pagos con tarjeta o transferencia"
+                }
+                autoFocus={esEfectivo}
+                disabled={!esEfectivo}
                 value={recibido}
                 onChange={(e) => setRecibido(e.target.value)}
-                className="border border-border bg-input flex-1"
+                className="border border-border bg-input flex-1 disabled:cursor-not-allowed disabled:opacity-50"
               />
               <Button
                 type="button"
                 variant="destructive"
                 onClick={() => setRecibido("")}
-                disabled={!recibido}
+                disabled={!esEfectivo || !recibido}
                 className="h-8 px-3 shrink-0 flex items-center gap-1.5 font-medium border-border hover:bg-destructive/90 cursor-pointer"
               >
                 <RotateCcw className="size-3.5" />
@@ -131,6 +187,7 @@ export default function CalculadoraCambio({
                 key={valor}
                 type="button"
                 variant="accent"
+                disabled={!esEfectivo}
                 className="h-10 w-full"
                 onClick={() => handleSumarBillete(valor)}
               >
