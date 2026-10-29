@@ -110,7 +110,7 @@ export function NuevoUsuarioModal({ open, onOpenChange, onGuardar }) {
                 id="nuevoRol"
                 value={form.rol}
                 onChange={(e) => setForm({ ...form, rol: e.target.value })}
-                className="h-8 w-full rounded-lg border border-input bg-card px-2.5 py-1 text-sm text-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 outline-none transition-colors"
+                className="h-8 w-full rounded-lg border border-border bg-input px-2.5 py-1 text-sm text-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 outline-none transition-colors"
                 required
               >
                 <option value="cajero">Cajero</option>

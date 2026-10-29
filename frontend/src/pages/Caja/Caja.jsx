@@ -213,7 +213,7 @@ export default function Caja() {
               </div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 h-2/3">
           {caja ? (
             <Button
               variant="destructive"
@@ -279,7 +279,7 @@ export default function Caja() {
               ? "Escaneá o escribí el código de barras y apretá Enter..."
               : "Abrí la caja para comenzar a vender..."
           }
-          className="w-1/4 rounded-md border bg-card px-4 py-2.5 text-sm outline-none disabled:cursor-not-allowed disabled:opacity-50"
+          className="w-1/4 rounded-md border border-border bg-input px-4 py-2.5 text-sm outline-none disabled:cursor-not-allowed disabled:opacity-50"
         />
       </form>
 
@@ -301,7 +301,7 @@ export default function Caja() {
           disabled={!caja}
           className="rounded-md bg-accent px-5 text-sm font-medium text-white hover:accent/85 h-10"
         >
-          Calcular Cambio
+          Cobrar
         </Button>
       </div>
 

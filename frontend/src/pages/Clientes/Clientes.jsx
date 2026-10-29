@@ -109,7 +109,7 @@ export default function Clientes() {
           value={busqueda}
           onChange={(e) => setBusqueda(e.target.value)}
           placeholder="Buscar cliente por nombre, apellido, documento o email..."
-          className="w-1/4 min-w-72 rounded-md border bg-card px-4 py-2.5 text-sm outline-none shadow-2xs placeholder:text-muted-foreground"
+          className="w-1/4 min-w-72 rounded-md border border-border bg-input px-4 py-2.5 text-sm outline-none shadow-2xs placeholder:text-muted-foreground"
         />
       </form>
 

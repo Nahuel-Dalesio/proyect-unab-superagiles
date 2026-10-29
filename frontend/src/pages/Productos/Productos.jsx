@@ -219,7 +219,7 @@ export default function Productos() {
           value={codigo}
           onChange={(e) => setCodigo(e.target.value)}
           placeholder="Buscar producto por nombre o código..."
-          className="w-1/4 min-w-64 rounded-md border bg-card px-4 py-2.5 text-sm outline-none"
+          className="w-1/4 min-w-64 rounded-md border border-border bg-input px-4 py-2.5 text-sm outline-none"
         />
       </form>
 
