@@ -44,20 +44,62 @@ export const createApertura = async ({ idUsuario, montoInicial }) => {
   return result.insertId;
 };
 
-// Total vendido desde la apertura de la caja indicada.
+// Desglose de ventas por medio de pago desde la apertura de la caja indicada.
 // Se compara contra la fecha guardada en la propia caja para evitar
 // problemas de zona horaria al serializar fechas desde JS.
-export const getTotalVentasDesde = async (idCierre) => {
+export const getResumenVentasDesde = async (idCierre) => {
   const [rows] = await pool.query(
-    `SELECT COALESCE(SUM(v.total), 0) AS total
+    `SELECT
+       v.medio_pago AS medioPago,
+       COALESCE(SUM(v.total), 0) AS subtotal
      FROM ventas v
      JOIN cierres_caja c ON c.id_cierre = ?
      WHERE v.estado = 'completada'
-       AND v.fecha_hora >= c.fecha_apertura`,
+       AND v.fecha_hora >= c.fecha_apertura
+       AND (c.fecha_cierre IS NULL OR v.fecha_hora <= c.fecha_cierre)
+     GROUP BY v.medio_pago`,
     [idCierre]
   );
 
-  return Number(rows[0].total);
+  const desglose = {
+    efectivo: 0,
+    transferencia: 0,
+    debito: 0,
+    credito: 0,
+    qr: 0,
+  };
+
+  for (const row of rows) {
+    const medio = row.medioPago;
+    const monto = Number(row.subtotal) || 0;
+    if (medio in desglose) {
+      desglose[medio] = monto;
+    }
+  }
+
+  const ventasEfectivo = Math.round(desglose.efectivo * 100) / 100;
+  const ventasTransferencia = Math.round(desglose.transferencia * 100) / 100;
+  const ventasTarjeta =
+    Math.round((desglose.debito + desglose.credito) * 100) / 100;
+  const ventasOtros = Math.round(desglose.qr * 100) / 100;
+  const totalVentas =
+    Math.round(
+      (ventasEfectivo + ventasTransferencia + ventasTarjeta + ventasOtros) * 100
+    ) / 100;
+
+  return {
+    totalVentas,
+    ventasEfectivo,
+    ventasTransferencia,
+    ventasTarjeta,
+    desgloseMediosPago: desglose,
+  };
+};
+
+// Mantiene compatibilidad si algún módulo pide solo el total general
+export const getTotalVentasDesde = async (idCierre) => {
+  const resumen = await getResumenVentasDesde(idCierre);
+  return resumen.totalVentas;
 };
 
 export const closeCaja = async ({
