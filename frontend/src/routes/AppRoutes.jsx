@@ -7,6 +7,7 @@ import Productos from "@/pages/Productos/Productos";
 import CalculadoraCambio from "@/components/CalculadoraCambio";
 import Clientes from "@/pages/Clientes/Clientes";
 import Usuarios from "@/pages/Usuarios/Usuarios";
+import Ventas from "@/pages/Ventas/Ventas";
 import { ROLES } from "@/utils/roles";
 
 const AppRoutes = () => {
@@ -21,6 +22,7 @@ const AppRoutes = () => {
         <Route element={<MainLayout />}>
           <Route path="/" element={<Navigate to="/caja" replace />} />
           <Route path="/caja" element={<Caja />} />
+          <Route path="/ventas" element={<Ventas />} />
           <Route path="/clientes" element={<Clientes />} />
 
           {/* Solo administradores y encargados pueden acceder a inventario y usuarios */}
@@ -31,7 +33,6 @@ const AppRoutes = () => {
           >
             <Route path="/inventario" element={<Productos />} />
             <Route path="/usuarios" element={<Usuarios />} />
-            
           </Route>
 
           <Route path="*" element={<div>Página no encontrada</div>} />
@@ -41,6 +42,4 @@ const AppRoutes = () => {
   );
 };
 
-
 export default AppRoutes;
-

@@ -20,10 +20,20 @@ import {
 
 const round2 = (n) => Math.round(n * 100) / 100;
 
-const FilaResumen = ({ label, valor, destacado = false }) => (
+const FilaResumen = ({ label, valor, destacado = false, secundario = false }) => (
   <div className="flex items-center justify-between text-sm">
-    <span className="text-muted-foreground">{label}</span>
-    <span className={destacado ? "text-lg font-semibold" : "font-medium"}>
+    <span className={secundario ? "text-xs text-muted-foreground" : "text-muted-foreground"}>
+      {label}
+    </span>
+    <span
+      className={
+        destacado
+          ? "text-lg font-semibold text-foreground"
+          : secundario
+            ? "text-xs font-medium text-muted-foreground"
+            : "font-medium text-foreground"
+      }
+    >
       {valor}
     </span>
   </div>
@@ -48,7 +58,7 @@ export default function CerrarCajaModal({
         maximumFractionDigits: 2,
       })}`);
 
-  // Al abrir, se refresca la caja para mostrar el total de ventas actualizado.
+  // Al abrir, se refresca la caja para mostrar el desglose de ventas actualizado.
   useEffect(() => {
     if (!open) return;
 
@@ -79,8 +89,13 @@ export default function CerrarCajaModal({
   const cajaActual = cajaRefrescada ?? caja;
 
   const montoInicial = Number(cajaActual?.montoInicial ?? 0);
+  const ventasEfectivo = Number(cajaActual?.ventasEfectivo ?? 0);
+  const ventasTransferencia = Number(cajaActual?.ventasTransferencia ?? 0);
+  const ventasTarjeta = Number(cajaActual?.ventasTarjeta ?? 0);
   const totalVentas = Number(cajaActual?.totalVentas ?? 0);
-  const montoEsperado = round2(montoInicial + totalVentas);
+
+  // El efectivo esperado en caja solo suma el monto inicial y los pagos en efectivo
+  const montoEsperado = round2(montoInicial + ventasEfectivo);
   const montoFinalNum = Number(montoFinal);
   const diferenciaCalculada =
     montoFinal === "" || !Number.isFinite(montoFinalNum)
@@ -134,13 +149,32 @@ export default function CerrarCajaModal({
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
           <div className="flex flex-col gap-2 rounded-lg border bg-muted/30 p-3">
             <FilaResumen
-              label="Monto inicial"
+              label="Monto inicial (efectivo)"
               valor={format(montoInicial)}
             />
             <FilaResumen
-              label="Ventas del turno"
-              valor={format(totalVentas)}
+              label="Ventas en efectivo:"
+              valor={format(ventasEfectivo)}
             />
+
+            <div className="border-t border-border/60 pt-2 flex flex-col gap-1">
+              <FilaResumen
+                label="Ventas por transferencia: "
+                valor={format(ventasTransferencia)}
+                secundario
+              />
+              <FilaResumen
+                label="Ventas con tarjeta: "
+                valor={format(ventasTarjeta)}
+                secundario
+              />
+              <FilaResumen
+                label="Total general vendido en el turno:"
+                valor={format(totalVentas)}
+                secundario
+              />
+            </div>
+
             <div className="border-t border-border pt-2">
               <FilaResumen
                 label="Efectivo esperado"
@@ -151,7 +185,7 @@ export default function CerrarCajaModal({
           </div>
 
           <div>
-            <Label className="mb-1 block">Monto final contado</Label>
+            <Label className="mb-1 block">Monto final en efectivo contado</Label>
             <Input
               type="number"
               step="0.01"
@@ -165,7 +199,7 @@ export default function CerrarCajaModal({
           </div>
 
           <div className="flex items-center justify-between rounded-lg border bg-card px-3 py-2 text-sm">
-            <span className="text-muted-foreground">Diferencia</span>
+            <span className="text-muted-foreground">Diferencia de efectivo</span>
             <span
               className={
                 diferenciaCalculada === null

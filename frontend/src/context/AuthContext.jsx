@@ -43,6 +43,7 @@ export const AuthProvider = ({ children }) => {
     setToken(null);
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    localStorage.removeItem("kiosco_carrito_caja");
   };
 
   return (

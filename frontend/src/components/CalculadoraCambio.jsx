@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import Swal from "sweetalert2";
-import { showWarning } from "@/utils/alerts";
-import { Banknote, CreditCard, Landmark, RotateCcw } from "lucide-react";
+import { showError, showWarning } from "@/utils/alerts";
+import { Banknote, CreditCard, Landmark, Loader2, RotateCcw } from "lucide-react";
+import { registrarVenta } from "@/service/ventas.service";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,20 +27,25 @@ export default function CalculadoraCambio({
   open,
   onOpenChange,
   total = 0,
+  carrito = [],
   formatoPrecio,
   onExito,
 }) {
   const [medioPago, setMedioPago] = useState("efectivo");
+  const [tipoTarjeta, setTipoTarjeta] = useState("debito");
   const [recibido, setRecibido] = useState("");
   const [emitirFactura, setEmitirFactura] = useState(false);
+  const [procesando, setProcesando] = useState(false);
 
   const esEfectivo = medioPago === "efectivo";
 
   useEffect(() => {
     if (open) {
       setMedioPago("efectivo");
+      setTipoTarjeta("debito");
       setRecibido("");
       setEmitirFactura(false);
+      setProcesando(false);
     }
   }, [open]);
 
@@ -50,58 +56,105 @@ export default function CalculadoraCambio({
     }
   };
 
-  const format = formatoPrecio || ((val) =>
-    `$${Number(val || 0).toLocaleString("es-AR", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })}`);
+  const format =
+    formatoPrecio ||
+    ((val) =>
+      `$${Number(val || 0).toLocaleString("es-AR", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`);
 
   const handleCerrar = () => {
-    onOpenChange?.(false);
+    if (!procesando) {
+      onOpenChange?.(false);
+    }
   };
 
   const handleCalcular = async (e) => {
     e?.preventDefault();
+    if (procesando) return;
 
-    if (!esEfectivo) {
-      await Swal.fire({
-        title: "Pago confirmado",
-        text: `Cobro por ${format(total)} mediante ${medioPago}. No requiere devolver cambio.`,
-        icon: "success",
-      });
-      onOpenChange?.(false);
-      onExito?.({ medioPago, montoRecibido: total, cambio: 0 });
-      return;
+    let montoRecibido = total;
+    let cambio = 0;
+
+    if (esEfectivo) {
+      montoRecibido = Number(recibido);
+
+      if (!recibido || isNaN(montoRecibido) || montoRecibido <= 0) {
+        showWarning("Ingresá un monto recibido válido.");
+        return;
+      }
+
+      cambio = montoRecibido - total;
+
+      if (cambio < 0) {
+        await Swal.fire({
+          title: "Falta dinero",
+          text: `Faltan ${format(Math.abs(cambio))}`,
+          icon: "warning",
+        });
+        return;
+      }
     }
 
-    const montoRecibido = Number(recibido);
+    const medioPagoBackend =
+      medioPago === "tarjeta" ? tipoTarjeta : medioPago;
 
-    if (!recibido || isNaN(montoRecibido) || montoRecibido <= 0) {
-      showWarning("Ingresá un monto recibido válido.");
-      return;
-    }
+    setProcesando(true);
 
-    const cambio = montoRecibido - total;
+    try {
+      let ventaRegistrada = null;
 
-    if (cambio < 0) {
-      await Swal.fire({
-        title: "Falta dinero",
-        text: `Faltan ${format(Math.abs(cambio))}`,
-        icon: "warning",
-      });
-    } else {
-      await Swal.fire({
-        title: "Cambio",
-        text: `Devolver ${format(cambio)}`,
-        icon: "success",
-      });
+      if (Array.isArray(carrito) && carrito.length > 0) {
+        const items = carrito.map((item) => ({
+          idProducto: item.idProducto,
+          cantidad: item.cantidad,
+        }));
+
+        const data = await registrarVenta({
+          items,
+          medioPago: medioPagoBackend,
+        });
+        ventaRegistrada = data?.venta ?? null;
+      }
+
+      if (esEfectivo) {
+        await Swal.fire({
+          title: "Venta registrada",
+          text: `Devolver ${format(cambio)} de cambio.`,
+          icon: "success",
+        });
+      } else {
+        const etiquetaMedio =
+          medioPago === "tarjeta"
+            ? `tarjeta (${tipoTarjeta})`
+            : "transferencia";
+
+        await Swal.fire({
+          title: "Venta registrada",
+          text: `Cobro por ${format(total)} mediante ${etiquetaMedio}. No requiere devolver cambio.`,
+          icon: "success",
+        });
+      }
+
       onOpenChange?.(false);
-      onExito?.({ medioPago, montoRecibido, cambio });
+      await onExito?.({
+        venta: ventaRegistrada,
+        medioPago: medioPagoBackend,
+        montoRecibido,
+        cambio,
+      });
+    } catch (error) {
+      showError(
+        error.status ? error.message : "Error al registrar la venta en el servidor"
+      );
+    } finally {
+      setProcesando(false);
     }
   };
 
   const handleSumarBillete = (valor) => {
-    if (!esEfectivo) return;
+    if (!esEfectivo || procesando) return;
     setRecibido((prev) => {
       const actual = Number(prev) || 0;
       return (actual + valor).toString();
@@ -109,7 +162,7 @@ export default function CalculadoraCambio({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleCerrar}>
       <DialogContent
         onPointerDownOutside={(e) => e.preventDefault()}
         onInteractOutside={(e) => e.preventDefault()}
@@ -140,6 +193,7 @@ export default function CalculadoraCambio({
                     type="button"
                     variant={seleccionado ? "accent" : "outline"}
                     onClick={() => handleSeleccionarMedioPago(id)}
+                    disabled={procesando}
                     className="h-10 w-full max-w-none flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <Icon className="size-4" />
@@ -148,6 +202,31 @@ export default function CalculadoraCambio({
                 );
               })}
             </div>
+
+            {medioPago === "tarjeta" && (
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={tipoTarjeta === "debito" ? "accent" : "outline"}
+                  onClick={() => setTipoTarjeta("debito")}
+                  disabled={procesando}
+                  className="w-full max-w-none cursor-pointer"
+                >
+                  Tarjeta de Débito
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={tipoTarjeta === "credito" ? "accent" : "outline"}
+                  onClick={() => setTipoTarjeta("credito")}
+                  disabled={procesando}
+                  className="w-full max-w-none cursor-pointer"
+                >
+                  Tarjeta de Crédito
+                </Button>
+              </div>
+            )}
           </div>
 
           <div>
@@ -163,7 +242,7 @@ export default function CalculadoraCambio({
                     : "No aplica para pagos con tarjeta o transferencia"
                 }
                 autoFocus={esEfectivo}
-                disabled={!esEfectivo}
+                disabled={!esEfectivo || procesando}
                 value={recibido}
                 onChange={(e) => setRecibido(e.target.value)}
                 className="border border-border bg-input flex-1 disabled:cursor-not-allowed disabled:opacity-50"
@@ -172,7 +251,7 @@ export default function CalculadoraCambio({
                 type="button"
                 variant="destructive"
                 onClick={() => setRecibido("")}
-                disabled={!esEfectivo || !recibido}
+                disabled={!esEfectivo || !recibido || procesando}
                 className="h-8 px-3 shrink-0 flex items-center gap-1.5 font-medium border-border hover:bg-destructive/90 cursor-pointer"
               >
                 <RotateCcw className="size-3.5" />
@@ -187,7 +266,7 @@ export default function CalculadoraCambio({
                 key={valor}
                 type="button"
                 variant="accent"
-                disabled={!esEfectivo}
+                disabled={!esEfectivo || procesando}
                 className="h-10 w-full"
                 onClick={() => handleSumarBillete(valor)}
               >
@@ -202,6 +281,7 @@ export default function CalculadoraCambio({
                 id="emitir-factura"
                 checked={emitirFactura}
                 onCheckedChange={setEmitirFactura}
+                disabled={procesando}
                 className="border-border data-checked:bg-accent data-checked:border-accent"
               />
               <Label htmlFor="emitir-factura" className="cursor-pointer">
@@ -219,15 +299,24 @@ export default function CalculadoraCambio({
               variant="destructive"
               className="h-10 w-full"
               onClick={handleCerrar}
+              disabled={procesando}
             >
               Cancelar
             </Button>
             <Button
               type="submit"
               variant="accent"
-              className="h-10 w-full"
+              className="h-10 w-full gap-2"
+              disabled={procesando}
             >
-              Calcular
+              {procesando ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  <span>Cobrar...</span>
+                </>
+              ) : (
+                "Confirmar Cobro"
+              )}
             </Button>
           </div>
         </form>
