@@ -1,5 +1,5 @@
 import React from "react";
-import { EllipsisVertical, Pencil, UserCheck, UserX } from "lucide-react";
+import { EllipsisVertical, Loader2, Pencil, UserCheck, UserX } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -20,10 +20,14 @@ import { cn } from "@/lib/utils";
 
 export function ClientesTable({
   clientes = [],
+  cargando = false,
+  esGestor = true,
   onEditarCliente,
   onToggleActivo,
   className,
 }) {
+  const totalColumnas = esGestor ? 7 : 6;
+
   return (
     <div
       className={cn(
@@ -35,7 +39,6 @@ export function ClientesTable({
         <Table containerClassName="overflow-visible" className="min-w-[900px] w-full">
           <TableHeader className="sticky top-0 z-10 bg-card shadow-xs [&_th]:bg-card">
             <TableRow className="hover:bg-transparent border-b">
-              {/* Primer columna con el Switch para activar o desactivar */}
               <TableHead className="px-4 py-3 font-normal text-foreground w-20 whitespace-nowrap">
                 Estado
               </TableHead>
@@ -54,16 +57,30 @@ export function ClientesTable({
               <TableHead className="px-4 py-3 font-normal text-foreground whitespace-nowrap">
                 Dirección
               </TableHead>
-              <TableHead className="px-4 py-3 font-normal text-foreground text-right whitespace-nowrap">
-                Acciones
-              </TableHead>
+              {esGestor && (
+                <TableHead className="px-4 py-3 font-normal text-foreground text-right whitespace-nowrap">
+                  Acciones
+                </TableHead>
+              )}
             </TableRow>
           </TableHeader>
           <TableBody>
-            {clientes.length === 0 ? (
+            {cargando ? (
               <TableRow>
                 <TableCell
-                  colSpan={7}
+                  colSpan={totalColumnas}
+                  className="h-28 text-center text-muted-foreground"
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    <Loader2 className="size-4 animate-spin" />
+                    <span>Cargando clientes...</span>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : clientes.length === 0 ? (
+              <TableRow>
+                <TableCell
+                  colSpan={totalColumnas}
                   className="h-28 text-center text-muted-foreground"
                 >
                   No se encontraron clientes registrados
@@ -78,19 +95,19 @@ export function ClientesTable({
                     !item.activo && "opacity-60 bg-muted/20"
                   )}
                 >
-                  {/* Primer columna: Switch para activar o desactivar */}
                   <TableCell className="px-4 py-3">
                     <div className="flex items-center">
                       <Switch
-                        checked={item.activo}
-                        onCheckedChange={() => onToggleActivo?.(item.id_cliente)}
-                        aria-label={`Cambiar estado de ${item.nombre} ${item.apellido}`}
+                        checked={Boolean(item.activo)}
+                        disabled={!esGestor}
+                        onCheckedChange={() => onToggleActivo?.(item)}
+                        aria-label={`Cambiar estado de ${item.nombre} ${item.apellido || ""}`}
                       />
                     </div>
                   </TableCell>
 
                   <TableCell className="px-4 py-3 font-medium text-foreground">
-                    {item.nombre} {item.apellido}
+                    {item.nombre} {item.apellido || ""}
                   </TableCell>
 
                   <TableCell className="px-4 py-3">
@@ -112,47 +129,49 @@ export function ClientesTable({
                     {item.direccion || "—"}
                   </TableCell>
 
-                  <TableCell className="px-4 py-3 text-right">
-                    <div className="flex items-center justify-end">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="size-8 hover:bg-muted text-muted-foreground hover:text-foreground cursor-pointer"
-                            aria-label="Opciones de cliente"
-                          >
-                            <EllipsisVertical className="size-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-44">
-                          <DropdownMenuItem
-                            onClick={() => onEditarCliente?.(item)}
-                            className="cursor-pointer gap-2"
-                          >
-                            <Pencil className="size-4 text-muted-foreground" />
-                            <span>Editar Cliente</span>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => onToggleActivo?.(item.id_cliente)}
-                            className="cursor-pointer gap-2"
-                          >
-                            {item.activo ? (
-                              <>
-                                <UserX className="size-4 text-destructive" />
-                                <span className="text-destructive">Desactivar</span>
-                              </>
-                            ) : (
-                              <>
-                                <UserCheck className="size-4 text-emerald-600" />
-                                <span className="text-emerald-600">Activar</span>
-                              </>
-                            )}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </TableCell>
+                  {esGestor && (
+                    <TableCell className="px-4 py-3 text-right">
+                      <div className="flex items-center justify-end">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-8 hover:bg-muted text-muted-foreground hover:text-foreground cursor-pointer"
+                              aria-label="Opciones de cliente"
+                            >
+                              <EllipsisVertical className="size-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-44">
+                            <DropdownMenuItem
+                              onClick={() => onEditarCliente?.(item)}
+                              className="cursor-pointer gap-2"
+                            >
+                              <Pencil className="size-4 text-muted-foreground" />
+                              <span>Editar Cliente</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => onToggleActivo?.(item)}
+                              className="cursor-pointer gap-2"
+                            >
+                              {item.activo ? (
+                                <>
+                                  <UserX className="size-4 text-destructive" />
+                                  <span className="text-destructive">Desactivar</span>
+                                </>
+                              ) : (
+                                <>
+                                  <UserCheck className="size-4 text-emerald-600" />
+                                  <span className="text-emerald-600">Activar</span>
+                                </>
+                              )}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </TableCell>
+                  )}
                 </TableRow>
               ))
             )}

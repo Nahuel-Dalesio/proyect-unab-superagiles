@@ -1,9 +1,9 @@
-import { useState } from "react";
-import { UserPlus } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Loader2, UserPlus } from "lucide-react";
+import { crearCliente } from "@/service/cliente.service";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -12,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { showWarning } from "@/utils/alerts";
+import { showError, showSuccess, showWarning } from "@/utils/alerts";
 
 const FORM_INICIAL = {
   nombre: "",
@@ -22,53 +22,86 @@ const FORM_INICIAL = {
   email: "",
   telefono: "",
   direccion: "",
-  activo: true,
 };
 
-export function NuevoClienteModal({ open, onOpenChange, onGuardar }) {
+export function NuevoClienteModal({ open, onOpenChange, onSuccess }) {
   const [form, setForm] = useState(FORM_INICIAL);
+  const [guardando, setGuardando] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setForm(FORM_INICIAL);
+    }
+  }, [open]);
 
   const cerrarModal = () => {
-    setForm(FORM_INICIAL);
-    onOpenChange(false);
+    if (!guardando) {
+      setForm(FORM_INICIAL);
+      onOpenChange(false);
+    }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!form.nombre.trim()) {
+    const nombre = form.nombre.trim();
+    const apellido = form.apellido.trim();
+    const numero_documento = form.numero_documento.trim();
+
+    if (!nombre) {
       showWarning("El nombre del cliente es obligatorio.");
       return;
     }
 
-    if (!form.apellido.trim()) {
-      showWarning("El apellido del cliente es obligatorio.");
-      return;
-    }
-
-    if (!form.numero_documento.trim()) {
+    if (!numero_documento) {
       showWarning("El número de documento es obligatorio.");
       return;
     }
 
-    onGuardar({
-      id_cliente: Date.now(),
-      nombre: form.nombre.trim(),
-      apellido: form.apellido.trim(),
-      tipo_documento: form.tipo_documento,
-      numero_documento: form.numero_documento.trim(),
-      email: form.email.trim(),
-      telefono: form.telefono.trim(),
-      direccion: form.direccion.trim(),
-      activo: form.activo,
-    });
+    setGuardando(true);
 
-    cerrarModal();
+    try {
+      const data = await crearCliente({
+        nombre,
+        apellido,
+        tipo_documento: form.tipo_documento,
+        numero_documento,
+        email: form.email.trim(),
+        telefono: form.telefono.trim(),
+        direccion: form.direccion.trim(),
+      });
+
+      onOpenChange(false);
+      showSuccess(
+        `Cliente "${nombre}${apellido ? ` ${apellido}` : ""}" registrado con éxito.`,
+        "Cliente Creado"
+      );
+
+      if (onSuccess) {
+        await onSuccess(data?.client);
+      }
+    } catch (error) {
+      showError(
+        error.status ? error.message : "Error al registrar el cliente"
+      );
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  const ignorarSiEsCartel = (e) => {
+    if (e.target instanceof Element && e.target.closest(".swal2-container")) {
+      e.preventDefault();
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent
+        className="sm:max-w-lg"
+        onInteractOutside={ignorarSiEsCartel}
+        onFocusOutside={ignorarSiEsCartel}
+      >
         <DialogHeader>
           <div className="flex items-center gap-2">
             <div className="p-2 bg-accent/10 text-accent rounded-lg">
@@ -90,6 +123,7 @@ export function NuevoClienteModal({ open, onOpenChange, onGuardar }) {
               <Input
                 id="nuevoClienteNombre"
                 placeholder="Ej: Homero"
+                maxLength={100}
                 value={form.nombre}
                 onChange={(e) => setForm({ ...form, nombre: e.target.value })}
                 required
@@ -98,13 +132,13 @@ export function NuevoClienteModal({ open, onOpenChange, onGuardar }) {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="nuevoClienteApellido">Apellido *</Label>
+              <Label htmlFor="nuevoClienteApellido">Apellido</Label>
               <Input
                 id="nuevoClienteApellido"
                 placeholder="Ej: Simpson"
+                maxLength={100}
                 value={form.apellido}
                 onChange={(e) => setForm({ ...form, apellido: e.target.value })}
-                required
               />
             </div>
           </div>
@@ -132,6 +166,7 @@ export function NuevoClienteModal({ open, onOpenChange, onGuardar }) {
               <Input
                 id="numeroDocumento"
                 placeholder="Ej: 12345678 o 20-12345678-9"
+                maxLength={20}
                 value={form.numero_documento}
                 onChange={(e) =>
                   setForm({ ...form, numero_documento: e.target.value })
@@ -147,6 +182,7 @@ export function NuevoClienteModal({ open, onOpenChange, onGuardar }) {
               <Input
                 id="nuevoClienteTelefono"
                 placeholder="Ej: 11-4567-8901"
+                maxLength={30}
                 value={form.telefono}
                 onChange={(e) =>
                   setForm({ ...form, telefono: e.target.value })
@@ -160,6 +196,7 @@ export function NuevoClienteModal({ open, onOpenChange, onGuardar }) {
                 id="nuevoClienteEmail"
                 type="email"
                 placeholder="Ej: homero@springfield.com"
+                maxLength={100}
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
               />
@@ -171,31 +208,35 @@ export function NuevoClienteModal({ open, onOpenChange, onGuardar }) {
             <Input
               id="nuevoClienteDireccion"
               placeholder="Ej: Avenida Siempreviva 742"
+              maxLength={255}
               value={form.direccion}
               onChange={(e) => setForm({ ...form, direccion: e.target.value })}
             />
           </div>
 
-          {/* Switch para estado inicial */}
-          <div className="flex items-center justify-between rounded-lg border p-3 bg-muted/20">
-            <div className="space-y-0.5">
-              <Label className="text-sm font-medium">Cliente activo</Label>
-              <p className="text-xs text-muted-foreground">
-                Habilita al cliente para asociarlo a ventas y facturas
-              </p>
-            </div>
-            <Switch
-              checked={form.activo}
-              onCheckedChange={(checked) => setForm({ ...form, activo: checked })}
-            />
-          </div>
-
           <DialogFooter className="pt-2">
-            <Button type="button" variant="outline" onClick={cerrarModal}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={cerrarModal}
+              disabled={guardando}
+            >
               Cancelar
             </Button>
-            <Button type="submit" variant="accent">
-              Guardar Cliente
+            <Button
+              type="submit"
+              variant="accent"
+              disabled={guardando}
+              className="gap-2"
+            >
+              {guardando ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  <span>Guardando...</span>
+                </>
+              ) : (
+                "Guardar Cliente"
+              )}
             </Button>
           </DialogFooter>
         </form>
