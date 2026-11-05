@@ -15,7 +15,7 @@ const PORT = process.env.PORT || 3001;
 // --- Middlewares base ---
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN,
+    origin: process.env.CORS_ORIGIN || "http://localhost:5173",
   })
 ); // permite requests solo desde el origen configurado
 

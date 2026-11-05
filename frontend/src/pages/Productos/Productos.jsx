@@ -1,8 +1,12 @@
 import { useCallback, useContext, useEffect, useRef, useState } from "react";
-import { Loader2, Package, Plus } from "lucide-react";
+import { AlertTriangle, Loader2, Package, Plus, TrendingUp } from "lucide-react";
 import { AuthContext } from "@/context/AuthContext";
 import { ROLES } from "@/utils/roles";
-import { getProductos, crearProducto } from "@/service/product.service";
+import {
+  getProductos,
+  getProductosStockBajo,
+  crearProducto,
+} from "@/service/product.service";
 import { showError, showSuccess, showWarning } from "@/utils/alerts";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +22,8 @@ import {
 import { ProductosTable } from "@/components/ProductosTable";
 import { EditarProductoModal } from "@/components/EditarProductoModal";
 import { AgregarStockModal } from "@/components/AgregarStockModal";
+import { ActualizarPreciosModal } from "@/components/ActualizarPreciosModal";
+import { StockBajoModal } from "@/components/StockBajoModal";
 
 const FORM_INICIAL = {
   codigoBarras: "",
@@ -43,6 +49,7 @@ export default function Productos() {
   const [productos, setProductos] = useState([]);
   const [inventario, setInventario] = useState([]);
   const [codigo, setCodigo] = useState("");
+  const [soloStockBajo, setSoloStockBajo] = useState(false);
   const inputRef = useRef(null);
 
   // Estado del modal de nuevo producto
@@ -50,16 +57,21 @@ export default function Productos() {
   const [form, setForm] = useState(FORM_INICIAL);
   const [guardando, setGuardando] = useState(false);
 
-  // Estado de modales auxiliares (editar y agregar stock)
+  // Estado de modales auxiliares (editar, agregar stock, precios por % y stock bajo)
   const [modalEditarAbierto, setModalEditarAbierto] = useState(false);
   const [productoAEditar, setProductoAEditar] = useState(null);
 
   const [modalStockAbierto, setModalStockAbierto] = useState(false);
   const [productoAStock, setProductoAStock] = useState(null);
 
-  const cargarProductos = useCallback(async () => {
+  const [modalPreciosAbierto, setModalPreciosAbierto] = useState(false);
+  const [modalStockBajoAbierto, setModalStockBajoAbierto] = useState(false);
+
+  const cargarProductos = useCallback(async (filtrarStockBajo = soloStockBajo) => {
     try {
-      const data = await getProductos();
+      const data = filtrarStockBajo
+        ? await getProductosStockBajo()
+        : await getProductos();
       const lista = Array.isArray(data) ? data : [];
       setProductos(lista);
       setInventario(lista);
@@ -68,11 +80,16 @@ export default function Productos() {
         error.status ? error.message : "Error de conexión con el servidor"
       );
     }
-  }, []);
+  }, [soloStockBajo]);
 
   useEffect(() => {
-    cargarProductos();
-  }, [cargarProductos]);
+    cargarProductos(soloStockBajo);
+  }, [cargarProductos, soloStockBajo]);
+
+  const handleToggleFiltroStockBajo = async () => {
+    const nuevoValor = !soloStockBajo;
+    setSoloStockBajo(nuevoValor);
+  };
 
   const abrirModal = () => {
     setForm(FORM_INICIAL);
@@ -185,7 +202,7 @@ export default function Productos() {
 
   return (
     <div className="flex flex-1 flex-col w-full min-h-0 overflow-hidden">
-      {/* Encabezado con título y botón de alta */}
+      {/* Encabezado con título y botones de gestión */}
       <div className="mb-6 flex shrink-0 items-center justify-between gap-4">
         <div className="flex flex-row items-center">
           <Package
@@ -199,19 +216,33 @@ export default function Productos() {
         </div>
 
         {esGestor && (
-          <Button
-            variant="accent"
-            onClick={abrirModal}
-            className="gap-2 font-medium h-10 px-4"
-          >
-            <Plus className="size-4" />
-            <span>Nuevo Producto</span>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              type="button"
+              onClick={() => setModalPreciosAbierto(true)}
+              className="gap-2 font-medium h-10 px-4 max-w-none cursor-pointer"
+            >
+              <TrendingUp className="size-4 text-accent" />
+              <span>Actualizar Precios (%)</span>
+            </Button>
+            <Button
+              variant="accent"
+              onClick={abrirModal}
+              className="gap-2 font-medium h-10 px-4 max-w-none cursor-pointer"
+            >
+              <Plus className="size-4" />
+              <span>Nuevo Producto</span>
+            </Button>
+          </div>
         )}
       </div>
 
-      {/* Barra de búsqueda */}
-      <form onSubmit={(e) => e.preventDefault()} className="mb-4 shrink-0">
+      {/* Barra de búsqueda y filtro de stock bajo */}
+      <form
+        onSubmit={(e) => e.preventDefault()}
+        className="mb-4 shrink-0 flex items-center justify-between gap-3"
+      >
         <input
           ref={inputRef}
           type="text"
@@ -221,6 +252,20 @@ export default function Productos() {
           placeholder="Buscar producto por nombre o código..."
           className="w-1/4 min-w-64 rounded-md border border-border bg-input px-4 py-2.5 text-sm outline-none"
         />
+
+        {esGestor && (
+          <Button
+            type="button"
+            variant={soloStockBajo ? "accent" : "outline"}
+            onClick={handleToggleFiltroStockBajo}
+            className="gap-2 h-10 px-4 max-w-none cursor-pointer"
+          >
+            <AlertTriangle className="size-4" />
+            <span>
+              {soloStockBajo ? "Mostrando solo stock bajo" : "Filtrar stock bajo"}
+            </span>
+          </Button>
+        )}
       </form>
 
       {/* Tabla de Productos */}
@@ -238,8 +283,8 @@ export default function Productos() {
         <Button
           variant="accent"
           type="button"
-          onClick={() => {}}
-          className="rounded-md bg-accent px-5 text-sm font-medium text-white hover:accent/85 h-10"
+          onClick={() => setModalStockBajoAbierto(true)}
+          className="rounded-md bg-accent px-5 text-sm font-medium text-white hover:accent/85 h-10 cursor-pointer"
         >
           Hacer pedido
         </Button>
@@ -401,6 +446,21 @@ export default function Productos() {
         onOpenChange={setModalStockAbierto}
         producto={productoAStock}
         onSuccess={cargarProductos}
+      />
+
+      {/* Modal para actualización masiva de precios por porcentaje */}
+      <ActualizarPreciosModal
+        open={modalPreciosAbierto}
+        onOpenChange={setModalPreciosAbierto}
+        onSuccess={cargarProductos}
+      />
+
+      {/* Modal de productos con stock bajo / Hacer pedido */}
+      <StockBajoModal
+        open={modalStockBajoAbierto}
+        onOpenChange={setModalStockBajoAbierto}
+        formatoPrecio={formatoPrecio}
+        onAgregarStock={abrirModalStock}
       />
     </div>
   );

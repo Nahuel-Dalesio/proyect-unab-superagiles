@@ -9,6 +9,8 @@ import CalculadoraCambio from "@/components/CalculadoraCambio";
 import AbrirCajaModal from "@/components/AbrirCajaModal";
 import CerrarCajaModal from "@/components/CerrarCajaModal";
 
+const CARRITO_STORAGE_KEY = "kiosco_carrito_caja";
+
 // MySQL devuelve los DECIMAL como string, por eso se convierte a número
 const formatoPrecio = (valor) =>
   `$${Number(valor).toLocaleString("es-AR", {
@@ -16,10 +18,22 @@ const formatoPrecio = (valor) =>
     maximumFractionDigits: 2,
   })}`;
 
+const leerCarritoGuardado = () => {
+  try {
+    const guardado = localStorage.getItem(CARRITO_STORAGE_KEY);
+    if (!guardado) return [];
+    const parseado = JSON.parse(guardado);
+    return Array.isArray(parseado) ? parseado : [];
+  } catch {
+    return [];
+  }
+};
+
 export default function Caja() {
   const [productos, setProductos] = useState([]);
-  const [carrito, setCarrito] = useState([]);
+  const [carrito, setCarrito] = useState(leerCarritoGuardado);
   const [codigo, setCodigo] = useState("");
+  const [mostrarSugerencias, setMostrarSugerencias] = useState(false);
   const [modalCalculadoraOpen, setModalCalculadoraOpen] = useState(false);
   const [caja, setCaja] = useState(null);
   const [esPropietario, setEsPropietario] = useState(false);
@@ -27,6 +41,41 @@ export default function Caja() {
   const [modalAbrirOpen, setModalAbrirOpen] = useState(false);
   const [modalCerrarOpen, setModalCerrarOpen] = useState(false);
   const inputRef = useRef(null);
+  const buscadorWrapperRef = useRef(null);
+
+  // Persiste el carrito para no perder los productos al cambiar de pestaña en el menú
+  useEffect(() => {
+    try {
+      localStorage.setItem(CARRITO_STORAGE_KEY, JSON.stringify(carrito));
+    } catch {
+      // Ignorar errores de almacenamiento
+    }
+  }, [carrito]);
+
+  // Cierra el desplegable de sugerencias al hacer clic fuera
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (
+        buscadorWrapperRef.current &&
+        !buscadorWrapperRef.current.contains(e.target)
+      ) {
+        setMostrarSugerencias(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const cargarProductos = useCallback(async () => {
+    try {
+      const data = await getProductos();
+      setProductos(Array.isArray(data) ? data : []);
+    } catch (error) {
+      showError(
+        error.status ? error.message : "Error de conexión con el servidor"
+      );
+    }
+  }, []);
 
   const cargarCaja = useCallback(async () => {
     try {
@@ -48,7 +97,29 @@ export default function Caja() {
     const cargar = async () => {
       try {
         const data = await getProductos();
-        if (activo) setProductos(data);
+        if (activo) {
+          const lista = Array.isArray(data) ? data : [];
+          setProductos(lista);
+
+          // Sincroniza stock y precios actuales de los ítems que ya estaban en el carrito
+          setCarrito((prev) =>
+            prev
+              .map((item) => {
+                const actualizado = lista.find(
+                  (p) => p.idProducto === item.idProducto
+                );
+                if (!actualizado) return item;
+                return {
+                  ...item,
+                  nombre: actualizado.nombre,
+                  codigoBarras: actualizado.codigoBarras,
+                  precioVenta: Number(actualizado.precioVenta),
+                  stock: actualizado.stock,
+                };
+              })
+              .filter((item) => item.stock > 0)
+          );
+        }
       } catch (error) {
         if (activo) {
           showError(
@@ -140,6 +211,29 @@ export default function Caja() {
     enfocar();
   };
 
+  // Productos sugeridos mientras escribe nombre o código
+  const terminoBusqueda = codigo.trim().toLowerCase();
+  const sugerencias = terminoBusqueda
+    ? productos
+        .filter(
+          (p) =>
+            String(p.codigoBarras ?? "")
+              .toLowerCase()
+              .includes(terminoBusqueda) ||
+            String(p.nombre ?? "")
+              .toLowerCase()
+              .includes(terminoBusqueda)
+        )
+        .slice(0, 6)
+    : [];
+
+  const handleSeleccionarSugerencia = (producto) => {
+    agregar(producto);
+    setCodigo("");
+    setMostrarSugerencias(false);
+    enfocar();
+  };
+
   const handleEscaneo = (e) => {
     e.preventDefault();
 
@@ -151,15 +245,22 @@ export default function Caja() {
     const valor = codigo.trim();
     if (!valor) return;
 
-    const producto = productos.find((p) => String(p.codigoBarras) === valor);
+    // 1. Busca coincidencia exacta por código de barras
+    let producto = productos.find((p) => String(p.codigoBarras) === valor);
+
+    // 2. Si no es código exacto y hay una única coincidencia en sugerencias, la agrega
+    if (!producto && sugerencias.length === 1) {
+      producto = sugerencias[0];
+    }
 
     if (!producto) {
-      showWarning(`No existe un producto con el código ${valor}.`);
+      showWarning(`No existe un producto con el código "${valor}".`);
     } else {
       agregar(producto);
     }
 
     setCodigo("");
+    setMostrarSugerencias(false);
     enfocar();
   };
 
@@ -167,7 +268,9 @@ export default function Caja() {
 
   const limpiarCaja = () => {
     setCarrito([]);
+    localStorage.removeItem(CARRITO_STORAGE_KEY);
     setCodigo("");
+    setMostrarSugerencias(false);
     enfocar();
   };
 
@@ -184,6 +287,14 @@ export default function Caja() {
     setModalCalculadoraOpen(true);
   };
 
+  const handleVentaExitosa = async () => {
+    setCarrito([]);
+    localStorage.removeItem(CARRITO_STORAGE_KEY);
+    setCodigo("");
+    await Promise.all([cargarProductos(), cargarCaja()]);
+    enfocar();
+  };
+
   const handleCajaAbierta = async () => {
     await cargarCaja();
     enfocar();
@@ -191,6 +302,7 @@ export default function Caja() {
 
   const handleCajaCerrada = async () => {
     setCarrito([]);
+    localStorage.removeItem(CARRITO_STORAGE_KEY);
     setCodigo("");
     await cargarCaja();
     enfocar();
@@ -213,7 +325,7 @@ export default function Caja() {
               </div>
           </div>
         </div>
-        <div className="flex items-center gap-2 h-2/3">
+        <div className="flex items-center gap-2">
           {caja ? (
             <Button
               variant="destructive"
@@ -266,22 +378,53 @@ export default function Caja() {
         </div>
       )}
 
-      <form onSubmit={handleEscaneo} className="mb-4 shrink-0">
-        <input
-          ref={inputRef}
-          type="text"
-          autoFocus
-          disabled={!caja}
-          value={codigo}
-          onChange={(e) => setCodigo(e.target.value)}
-          placeholder={
-            caja
-              ? "Escaneá o escribí el código de barras y apretá Enter..."
-              : "Abrí la caja para comenzar a vender..."
-          }
-          className="w-1/4 rounded-md border border-border bg-input px-4 py-2.5 text-sm outline-none disabled:cursor-not-allowed disabled:opacity-50"
-        />
-      </form>
+      <div ref={buscadorWrapperRef} className="relative mb-4 shrink-0 w-1/3 min-w-80">
+        <form onSubmit={handleEscaneo}>
+          <input
+            ref={inputRef}
+            type="text"
+            autoFocus
+            disabled={!caja}
+            value={codigo}
+            onFocus={() => setMostrarSugerencias(true)}
+            onChange={(e) => {
+              setCodigo(e.target.value);
+              setMostrarSugerencias(true);
+            }}
+            placeholder={
+              caja
+                ? "Escaneá el código o buscá por nombre de producto..."
+                : "Abrí la caja para comenzar a vender..."
+            }
+            className="w-full rounded-md border border-border bg-input px-4 py-2.5 text-sm outline-none disabled:cursor-not-allowed disabled:opacity-50"
+          />
+        </form>
+
+        {caja && mostrarSugerencias && sugerencias.length > 0 && (
+          <div className="absolute left-0 right-0 top-full z-30 mt-1 max-h-64 overflow-y-auto rounded-lg border border-border bg-card shadow-lg">
+            {sugerencias.map((prod) => (
+              <button
+                key={prod.idProducto}
+                type="button"
+                onClick={() => handleSeleccionarSugerencia(prod)}
+                className="flex w-full items-center justify-between gap-3 border-b border-border/50 px-3 py-2 text-left text-sm hover:bg-muted/60 last:border-b-0 cursor-pointer"
+              >
+                <div className="min-w-0">
+                  <div className="font-medium text-foreground truncate">
+                    {prod.nombre}
+                  </div>
+                  <div className="text-xs font-mono text-muted-foreground">
+                    Código: {prod.codigoBarras} · Stock: {prod.stock} u.
+                  </div>
+                </div>
+                <span className="shrink-0 font-semibold text-accent">
+                  {formatoPrecio(prod.precioVenta)}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
 
       <CajeroTable
         carrito={carrito}
@@ -301,7 +444,7 @@ export default function Caja() {
           disabled={!caja}
           className="rounded-md bg-accent px-5 text-sm font-medium text-white hover:accent/85 h-10"
         >
-          Cobrar
+          Calcular Cambio
         </Button>
       </div>
 
@@ -314,7 +457,9 @@ export default function Caja() {
           }
         }}
         total={total}
+        carrito={carrito}
         formatoPrecio={formatoPrecio}
+        onExito={handleVentaExitosa}
       />
 
       <AbrirCajaModal

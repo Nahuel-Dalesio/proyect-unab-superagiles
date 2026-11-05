@@ -1,8 +1,18 @@
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { LogOut, Package, ShoppingCart, Store, UserCheck, Users } from "lucide-react";
+import {
+  History,
+  LogOut,
+  Package,
+  ShoppingCart,
+  Store,
+  UserCheck,
+  Users,
+} from "lucide-react";
 import { AuthContext } from "@/context/AuthContext";
 import { ROLES } from "@/utils/roles";
+import { getCajaAbierta } from "@/service/caja.service";
+import CerrarCajaModal from "@/components/CerrarCajaModal";
 import {
   Sidebar,
   SidebarContent,
@@ -22,6 +32,12 @@ const MENU_ITEMS = [
     label: "Caja",
     path: "/caja",
     icon: ShoppingCart,
+    roles: [ROLES.ADMIN, ROLES.ENCARGADO, ROLES.CAJERO],
+  },
+  {
+    label: "Historial Ventas",
+    path: "/ventas",
+    icon: History,
     roles: [ROLES.ADMIN, ROLES.ENCARGADO, ROLES.CAJERO],
   },
   {
@@ -51,61 +67,103 @@ const ACTIVO =
 export default function AppSidebar() {
   const { user, logout } = useContext(AuthContext);
   const { pathname } = useLocation();
+  const [cajaAbierta, setCajaAbierta] = useState(null);
+  const [modalCerrarCajaOpen, setModalCerrarCajaOpen] = useState(false);
+  const [verificandoCaja, setVerificandoCaja] = useState(false);
 
   const itemsVisibles = MENU_ITEMS.filter((item) =>
     item.roles.includes(user?.rol)
   );
 
+  const handleIntentarLogout = async () => {
+    if (verificandoCaja) return;
+    setVerificandoCaja(true);
+
+    try {
+      const data = await getCajaAbierta();
+      // Si hay una caja abierta por el usuario actual, primero debe cerrarla
+      if (data?.caja && data?.esPropietario) {
+        setCajaAbierta(data.caja);
+        setModalCerrarCajaOpen(true);
+        return;
+      }
+    } catch {
+      // Si falla la consulta al servidor, permitir cerrar sesión normalmente
+    } finally {
+      setVerificandoCaja(false);
+    }
+
+    logout();
+  };
+
+  const handleCajaCerradaAlSalir = () => {
+    setModalCerrarCajaOpen(false);
+    setCajaAbierta(null);
+    logout();
+  };
+
   return (
-    <Sidebar collapsible="icon">
-      <SidebarHeader className="h-14 justify-center border-b px-4 group-data-[collapsible=icon]:px-4 bg-card">
-        <div className="flex items-center gap-2 group-data-[collapsible=icon]:justify-left">
-          <Store className="size-5 shrink-0" />
-          <span className="font-semibold truncate group-data-[collapsible=icon]:hidden">
-            Kwik-E-Mart
-          </span>
-        </div>
-      </SidebarHeader>
+    <>
+      <Sidebar collapsible="icon">
+        <SidebarHeader className="h-14 justify-center border-b px-4 group-data-[collapsible=icon]:px-4 bg-card">
+          <div className="flex items-center gap-2 group-data-[collapsible=icon]:justify-left">
+            <Store className="size-5 shrink-0" />
+            <span className="font-semibold truncate group-data-[collapsible=icon]:hidden">
+              Kwik-E-Mart
+            </span>
+          </div>
+        </SidebarHeader>
 
-      <SidebarContent className="bg-card">
-        <SidebarGroup>
+        <SidebarContent className="bg-card">
+          <SidebarGroup>
+            <SidebarGroupContent>
+              <SidebarMenu className="gap-1">
+                {itemsVisibles.map(({ label, path, icon: Icon }) => (
+                  <SidebarMenuItem key={path}>
+                    <SidebarMenuButton
+                      asChild
+                      tooltip={label}
+                      isActive={pathname.startsWith(path)}
+                      className={ACTIVO}
+                    >
+                      <Link to={path}>
+                        <Icon />
+                        <span className="group-data-[collapsible=icon]:hidden">
+                          {label}
+                        </span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
 
-          <SidebarGroupContent>
-            <SidebarMenu className="gap-1">
-              {itemsVisibles.map(({ label, path, icon: Icon }) => (
-                <SidebarMenuItem key={path}>
-                  <SidebarMenuButton
-                    asChild
-                    tooltip={label}
-                    isActive={pathname.startsWith(path)}
-                    className={ACTIVO}
-                  >
-                    <Link to={path}>
-                      <Icon />
-                      <span className="group-data-[collapsible=icon]:hidden">
-                        {label}
-                      </span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
+        <SidebarFooter>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                tooltip="Cerrar sesión"
+                onClick={handleIntentarLogout}
+                disabled={verificandoCaja}
+              >
+                <LogOut />
+                <span className="group-data-[collapsible=icon]:hidden">
+                  {verificandoCaja ? "Verificando caja..." : "Cerrar sesión"}
+                </span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarFooter>
+      </Sidebar>
 
-      <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton tooltip="Cerrar sesión" onClick={logout}>
-              <LogOut />
-              <span className="group-data-[collapsible=icon]:hidden">
-                Cerrar sesión
-              </span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
-    </Sidebar>
+      <CerrarCajaModal
+        open={modalCerrarCajaOpen}
+        onOpenChange={setModalCerrarCajaOpen}
+        caja={cajaAbierta}
+        onSuccess={handleCajaCerradaAlSalir}
+      />
+    </>
   );
 }

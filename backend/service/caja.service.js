@@ -2,7 +2,7 @@ import {
   findOpenCaja,
   findCajaById,
   createApertura,
-  getTotalVentasDesde,
+  getResumenVentasDesde,
   closeCaja,
 } from "../models/caja.model.js";
 
@@ -40,19 +40,30 @@ const mapCaja = (caja) => {
     montoInicial: Number(caja.montoInicial),
     montoFinal: caja.montoFinal === null ? null : Number(caja.montoFinal),
     totalVentas: caja.totalVentas === null ? null : Number(caja.totalVentas),
+    ventasEfectivo:
+      caja.ventasEfectivo === undefined ? 0 : Number(caja.ventasEfectivo),
+    ventasTransferencia:
+      caja.ventasTransferencia === undefined
+        ? 0
+        : Number(caja.ventasTransferencia),
+    ventasTarjeta:
+      caja.ventasTarjeta === undefined ? 0 : Number(caja.ventasTarjeta),
     diferencia: caja.diferencia === null ? null : Number(caja.diferencia),
   };
 };
 
-// Devuelve la caja abierta (con el total vendido hasta ahora) o null.
+// Devuelve la caja abierta (con el desglose de ventas hasta ahora) o null.
 export const obtenerCajaAbierta = async () => {
   const caja = await findOpenCaja();
 
   if (!caja) return null;
 
-  const totalVentas = await getTotalVentasDesde(caja.idCierre);
+  const resumen = await getResumenVentasDesde(caja.idCierre);
 
-  return mapCaja({ ...caja, totalVentas });
+  return mapCaja({
+    ...caja,
+    ...resumen,
+  });
 };
 
 export const abrirCaja = async (idUsuario, montoInicialValue) => {
@@ -96,7 +107,13 @@ export const abrirCaja = async (idUsuario, montoInicialValue) => {
 
   const caja = await findCajaById(idCierre);
 
-  return mapCaja({ ...caja, totalVentas: 0 });
+  return mapCaja({
+    ...caja,
+    totalVentas: 0,
+    ventasEfectivo: 0,
+    ventasTransferencia: 0,
+    ventasTarjeta: 0,
+  });
 };
 
 export const cerrarCaja = async (idUsuario, idCierreValue, montoFinalValue) => {
@@ -137,14 +154,17 @@ export const cerrarCaja = async (idUsuario, idCierreValue, montoFinalValue) => {
     );
   }
 
-  const totalVentas = await getTotalVentasDesde(idCierre);
-  const montoEsperado = round2(Number(caja.montoInicial) + totalVentas);
+  const resumen = await getResumenVentasDesde(idCierre);
+  // El efectivo esperado en caja solo suma el monto inicial + las ventas cobradas en efectivo
+  const montoEsperado = round2(
+    Number(caja.montoInicial) + resumen.ventasEfectivo
+  );
   const diferencia = round2(montoFinal - montoEsperado);
 
   const affectedRows = await closeCaja({
     idCierre,
     montoFinal,
-    totalVentas,
+    totalVentas: resumen.totalVentas,
     diferencia,
   });
 
@@ -154,5 +174,8 @@ export const cerrarCaja = async (idUsuario, idCierreValue, montoFinalValue) => {
 
   const cajaCerrada = await findCajaById(idCierre);
 
-  return mapCaja(cajaCerrada);
+  return mapCaja({
+    ...cajaCerrada,
+    ...resumen,
+  });
 };
