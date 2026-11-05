@@ -3,6 +3,7 @@ import Swal from "sweetalert2";
 import { showError, showWarning } from "@/utils/alerts";
 import { Banknote, CreditCard, Landmark, Loader2, RotateCcw } from "lucide-react";
 import { registrarVenta } from "@/service/ventas.service";
+import { crearCliente } from "@/service/cliente.service";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,6 +24,17 @@ const MEDIOS_PAGO = [
   { id: "tarjeta", label: "Tarjeta", icon: CreditCard },
 ];
 
+const ESTADO_FACTURA_INICIAL = {
+  clienteSeleccionado: null,
+  registrarNuevo: false,
+  nuevoCliente: {
+    nombre: "",
+    apellido: "",
+    tipo_documento: "DNI",
+    numero_documento: "",
+  },
+};
+
 export default function CalculadoraCambio({
   open,
   onOpenChange,
@@ -35,6 +47,7 @@ export default function CalculadoraCambio({
   const [tipoTarjeta, setTipoTarjeta] = useState("debito");
   const [recibido, setRecibido] = useState("");
   const [emitirFactura, setEmitirFactura] = useState(false);
+  const [datosFactura, setDatosFactura] = useState(ESTADO_FACTURA_INICIAL);
   const [procesando, setProcesando] = useState(false);
 
   const esEfectivo = medioPago === "efectivo";
@@ -45,6 +58,7 @@ export default function CalculadoraCambio({
       setTipoTarjeta("debito");
       setRecibido("");
       setEmitirFactura(false);
+      setDatosFactura(ESTADO_FACTURA_INICIAL);
       setProcesando(false);
     }
   }, [open]);
@@ -97,12 +111,48 @@ export default function CalculadoraCambio({
       }
     }
 
+    // Validación de cliente si se marcó "Emitir factura"
+    if (emitirFactura) {
+      if (datosFactura.registrarNuevo) {
+        const nombre = datosFactura.nuevoCliente.nombre.trim();
+        const numeroDoc = datosFactura.nuevoCliente.numero_documento.trim();
+        if (!nombre || !numeroDoc) {
+          showWarning(
+            "Completá el nombre y el número de documento para registrar al cliente de la factura."
+          );
+          return;
+        }
+      } else if (!datosFactura.clienteSeleccionado) {
+        showWarning(
+          "Seleccioná un cliente existente o marcá 'Registrar cliente nuevo' para emitir la factura."
+        );
+        return;
+      }
+    }
+
     const medioPagoBackend =
       medioPago === "tarjeta" ? tipoTarjeta : medioPago;
 
     setProcesando(true);
 
     try {
+      let idCliente = null;
+
+      if (emitirFactura) {
+        if (datosFactura.registrarNuevo) {
+          const resCliente = await crearCliente({
+            nombre: datosFactura.nuevoCliente.nombre.trim(),
+            apellido: datosFactura.nuevoCliente.apellido.trim(),
+            tipo_documento: datosFactura.nuevoCliente.tipo_documento,
+            numero_documento:
+              datosFactura.nuevoCliente.numero_documento.trim(),
+          });
+          idCliente = resCliente?.client?.id_cliente ?? null;
+        } else {
+          idCliente = datosFactura.clienteSeleccionado?.id_cliente ?? null;
+        }
+      }
+
       let ventaRegistrada = null;
 
       if (Array.isArray(carrito) && carrito.length > 0) {
@@ -114,6 +164,7 @@ export default function CalculadoraCambio({
         const data = await registrarVenta({
           items,
           medioPago: medioPagoBackend,
+          idCliente,
         });
         ventaRegistrada = data?.venta ?? null;
       }
@@ -291,7 +342,13 @@ export default function CalculadoraCambio({
           </div>
 
           {/* Componente hijo renderizado condicionalmente */}
-          {emitirFactura && <RegistroCliente />}
+          {emitirFactura && (
+            <RegistroCliente
+              value={datosFactura}
+              onChange={setDatosFactura}
+              disabled={procesando}
+            />
+          )}
 
           <div className="flex gap-2 justify-between mt-auto pt-2">
             <Button

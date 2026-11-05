@@ -1,14 +1,25 @@
-import { useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { Plus, UserCheck } from "lucide-react";
+import { AuthContext } from "@/context/AuthContext";
+import { ROLES } from "@/utils/roles";
+import {
+  getClientes,
+  actualizarCliente,
+  desactivarCliente,
+} from "@/service/cliente.service";
 import { Button } from "@/components/ui/button";
 import { ClientesTable } from "@/components/ClientesTable";
 import { NuevoClienteModal } from "@/components/NuevoClienteModal";
 import { EditarClienteModal } from "@/components/EditarClienteModal";
-import { MOCK_CLIENTES } from "@/mocks/clientes.mock";
-import { showSuccess } from "@/utils/alerts";
+import { showError, showSuccess } from "@/utils/alerts";
 
 export default function Clientes() {
-  const [clientes, setClientes] = useState(MOCK_CLIENTES);
+  const { user } = useContext(AuthContext);
+  const esGestor =
+    !user || user.rol === ROLES.ADMIN || user.rol === ROLES.ENCARGADO;
+
+  const [clientes, setClientes] = useState([]);
+  const [cargando, setCargando] = useState(true);
   const [busqueda, setBusqueda] = useState("");
 
   // Modales
@@ -16,50 +27,62 @@ export default function Clientes() {
   const [modalEditarAbierto, setModalEditarAbierto] = useState(false);
   const [clienteAEditar, setClienteAEditar] = useState(null);
 
-  // Alternar estado activo / inactivo directamente desde la tabla con el switch
-  const handleToggleActivo = (idCliente) => {
-    setClientes((prev) =>
-      prev.map((c) => {
-        if (c.id_cliente === idCliente) {
-          const nuevoEstado = !c.activo;
-          showSuccess(
-            `Cliente "${c.nombre} ${c.apellido}" ${
-              nuevoEstado ? "activado" : "desactivado"
-            } correctamente.`,
-            "Estado actualizado"
-          );
-          return { ...c, activo: nuevoEstado };
-        }
-        return c;
-      })
-    );
-  };
+  const cargarClientes = useCallback(async () => {
+    setCargando(true);
+    try {
+      const data = await getClientes();
+      setClientes(Array.isArray(data) ? data : []);
+    } catch (error) {
+      showError(
+        error.status ? error.message : "Error de conexión al obtener los clientes"
+      );
+    } finally {
+      setCargando(false);
+    }
+  }, []);
 
-  // Crear cliente
-  const handleCrearCliente = (nuevoCliente) => {
-    setClientes((prev) => [nuevoCliente, ...prev]);
-    showSuccess(
-      `Cliente "${nuevoCliente.nombre} ${nuevoCliente.apellido}" registrado con éxito.`,
-      "Cliente Creado"
-    );
+  useEffect(() => {
+    cargarClientes();
+  }, [cargarClientes]);
+
+  // Alternar estado activo / inactivo contra el backend
+  const handleToggleActivo = async (cliente) => {
+    if (!cliente || !esGestor) return;
+
+    const nuevoEstado = !cliente.activo;
+
+    try {
+      if (nuevoEstado) {
+        await actualizarCliente(cliente.id_cliente, { activo: true });
+      } else {
+        await desactivarCliente(cliente.id_cliente);
+      }
+
+      setClientes((prev) =>
+        prev.map((c) =>
+          c.id_cliente === cliente.id_cliente
+            ? { ...c, activo: nuevoEstado }
+            : c
+        )
+      );
+
+      showSuccess(
+        `Cliente "${cliente.nombre}${cliente.apellido ? ` ${cliente.apellido}` : ""}" ${
+          nuevoEstado ? "activado" : "desactivado"
+        } correctamente.`,
+        "Estado actualizado"
+      );
+    } catch (error) {
+      showError(
+        error.status ? error.message : "Error al actualizar el estado del cliente"
+      );
+    }
   };
 
   // Editar cliente
   const handleAbrirEditar = (cliente) => {
     setClienteAEditar(cliente);
     setModalEditarAbierto(true);
-  };
-
-  const handleGuardarEdicion = (clienteActualizado) => {
-    setClientes((prev) =>
-      prev.map((c) =>
-        c.id_cliente === clienteActualizado.id_cliente ? clienteActualizado : c
-      )
-    );
-    showSuccess(
-      `Cliente "${clienteActualizado.nombre} ${clienteActualizado.apellido}" actualizado correctamente.`,
-      "Cambios Guardados"
-    );
   };
 
   // Filtrado de clientes
@@ -69,9 +92,10 @@ export default function Clientes() {
     return (
       (c.nombre && c.nombre.toLowerCase().includes(term)) ||
       (c.apellido && c.apellido.toLowerCase().includes(term)) ||
-      (c.numero_documento && c.numero_documento.toLowerCase().includes(term)) ||
+      (c.numero_documento &&
+        String(c.numero_documento).toLowerCase().includes(term)) ||
       (c.email && c.email.toLowerCase().includes(term)) ||
-      (c.telefono && c.telefono.toLowerCase().includes(term))
+      (c.telefono && String(c.telefono).toLowerCase().includes(term))
     );
   });
 
@@ -116,6 +140,8 @@ export default function Clientes() {
       {/* Tabla de Clientes */}
       <ClientesTable
         clientes={clientesFiltrados}
+        cargando={cargando}
+        esGestor={esGestor}
         onEditarCliente={handleAbrirEditar}
         onToggleActivo={handleToggleActivo}
       />
@@ -124,7 +150,7 @@ export default function Clientes() {
       <NuevoClienteModal
         open={modalNuevoAbierto}
         onOpenChange={setModalNuevoAbierto}
-        onGuardar={handleCrearCliente}
+        onSuccess={cargarClientes}
       />
 
       {/* Modal para editar cliente */}
@@ -132,7 +158,7 @@ export default function Clientes() {
         open={modalEditarAbierto}
         onOpenChange={setModalEditarAbierto}
         cliente={clienteAEditar}
-        onGuardar={handleGuardarEdicion}
+        onSuccess={cargarClientes}
       />
     </div>
   );

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { UserCheck } from "lucide-react";
+import { Loader2, UserCheck } from "lucide-react";
+import { actualizarCliente } from "@/service/cliente.service";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,13 +13,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { showWarning } from "@/utils/alerts";
+import { showError, showSuccess, showWarning } from "@/utils/alerts";
 
 export function EditarClienteModal({
   open,
   onOpenChange,
   cliente,
-  onGuardar,
+  onSuccess,
 }) {
   const [form, setForm] = useState({
     nombre: "",
@@ -30,6 +31,7 @@ export function EditarClienteModal({
     direccion: "",
     activo: true,
   });
+  const [guardando, setGuardando] = useState(false);
 
   useEffect(() => {
     if (cliente && open) {
@@ -41,52 +43,80 @@ export function EditarClienteModal({
         email: cliente.email || "",
         telefono: cliente.telefono || "",
         direccion: cliente.direccion || "",
-        activo: cliente.activo ?? true,
+        activo: Boolean(cliente.activo ?? true),
       });
     }
   }, [cliente, open]);
 
   const cerrarModal = () => {
-    onOpenChange(false);
+    if (!guardando) {
+      onOpenChange(false);
+    }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!cliente) return;
 
-    if (!form.nombre.trim()) {
+    const nombre = form.nombre.trim();
+    const apellido = form.apellido.trim();
+    const numero_documento = form.numero_documento.trim();
+
+    if (!nombre) {
       showWarning("El nombre del cliente es obligatorio.");
       return;
     }
 
-    if (!form.apellido.trim()) {
-      showWarning("El apellido del cliente es obligatorio.");
-      return;
-    }
-
-    if (!form.numero_documento.trim()) {
+    if (!numero_documento) {
       showWarning("El número de documento es obligatorio.");
       return;
     }
 
-    onGuardar({
-      ...cliente,
-      nombre: form.nombre.trim(),
-      apellido: form.apellido.trim(),
-      tipo_documento: form.tipo_documento,
-      numero_documento: form.numero_documento.trim(),
-      email: form.email.trim(),
-      telefono: form.telefono.trim(),
-      direccion: form.direccion.trim(),
-      activo: form.activo,
-    });
+    setGuardando(true);
 
-    cerrarModal();
+    try {
+      const data = await actualizarCliente(cliente.id_cliente, {
+        nombre,
+        apellido,
+        tipo_documento: form.tipo_documento,
+        numero_documento,
+        email: form.email.trim(),
+        telefono: form.telefono.trim(),
+        direccion: form.direccion.trim(),
+        activo: form.activo,
+      });
+
+      onOpenChange(false);
+      showSuccess(
+        `Cliente "${nombre}${apellido ? ` ${apellido}` : ""}" actualizado correctamente.`,
+        "Cambios Guardados"
+      );
+
+      if (onSuccess) {
+        await onSuccess(data?.client);
+      }
+    } catch (error) {
+      showError(
+        error.status ? error.message : "Error al actualizar el cliente"
+      );
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  const ignorarSiEsCartel = (e) => {
+    if (e.target instanceof Element && e.target.closest(".swal2-container")) {
+      e.preventDefault();
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent
+        className="sm:max-w-lg"
+        onInteractOutside={ignorarSiEsCartel}
+        onFocusOutside={ignorarSiEsCartel}
+      >
         <DialogHeader>
           <div className="flex items-center gap-2">
             <div className="p-2 bg-accent/10 text-accent rounded-lg">
@@ -107,6 +137,7 @@ export function EditarClienteModal({
               <Label htmlFor="editClienteNombre">Nombre *</Label>
               <Input
                 id="editClienteNombre"
+                maxLength={100}
                 value={form.nombre}
                 onChange={(e) => setForm({ ...form, nombre: e.target.value })}
                 required
@@ -114,12 +145,12 @@ export function EditarClienteModal({
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="editClienteApellido">Apellido *</Label>
+              <Label htmlFor="editClienteApellido">Apellido</Label>
               <Input
                 id="editClienteApellido"
+                maxLength={100}
                 value={form.apellido}
                 onChange={(e) => setForm({ ...form, apellido: e.target.value })}
-                required
               />
             </div>
           </div>
@@ -146,6 +177,7 @@ export function EditarClienteModal({
               <Label htmlFor="editNumeroDocumento">Número de Documento *</Label>
               <Input
                 id="editNumeroDocumento"
+                maxLength={20}
                 value={form.numero_documento}
                 onChange={(e) =>
                   setForm({ ...form, numero_documento: e.target.value })
@@ -160,6 +192,7 @@ export function EditarClienteModal({
               <Label htmlFor="editClienteTelefono">Teléfono</Label>
               <Input
                 id="editClienteTelefono"
+                maxLength={30}
                 value={form.telefono}
                 onChange={(e) =>
                   setForm({ ...form, telefono: e.target.value })
@@ -172,6 +205,7 @@ export function EditarClienteModal({
               <Input
                 id="editClienteEmail"
                 type="email"
+                maxLength={100}
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
               />
@@ -182,6 +216,7 @@ export function EditarClienteModal({
             <Label htmlFor="editClienteDireccion">Dirección</Label>
             <Input
               id="editClienteDireccion"
+              maxLength={255}
               value={form.direccion}
               onChange={(e) => setForm({ ...form, direccion: e.target.value })}
             />
@@ -204,11 +239,28 @@ export function EditarClienteModal({
           </div>
 
           <DialogFooter className="pt-2">
-            <Button type="button" variant="outline" onClick={cerrarModal}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={cerrarModal}
+              disabled={guardando}
+            >
               Cancelar
             </Button>
-            <Button type="submit" variant="accent">
-              Guardar Cambios
+            <Button
+              type="submit"
+              variant="accent"
+              disabled={guardando}
+              className="gap-2"
+            >
+              {guardando ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  <span>Guardando...</span>
+                </>
+              ) : (
+                "Guardar Cambios"
+              )}
             </Button>
           </DialogFooter>
         </form>
