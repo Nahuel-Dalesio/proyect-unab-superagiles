@@ -6,6 +6,7 @@ import authRoutes from "./routes/auth.routes.js";
 import productRoutes from "./routes/producto.routes.js";
 import cajaRoutes from "./routes/caja.routes.js";
 import ventasRoutes from "./routes/ventas.routes.js";
+import clientRoutes from "./routes/cliente.routes.js";
 
 dotenv.config();
 
@@ -26,6 +27,7 @@ app.use("/api", authRoutes);
 app.use("/api", productRoutes);
 app.use("/api", cajaRoutes);
 app.use("/api", ventasRoutes);
+app.use("/api", clientRoutes);
 
 // Ruta de prueba simple para verificar que el server esta vivo
 app.get("/", (req, res) => {
