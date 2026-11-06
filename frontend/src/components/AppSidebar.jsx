@@ -56,7 +56,7 @@ const MENU_ITEMS = [
     label: "Usuarios",
     path: "/usuarios",
     icon: Users,
-    roles: [ROLES.ADMIN, ROLES.ENCARGADO],
+    roles: [ROLES.ADMIN],
   },
 ];
 

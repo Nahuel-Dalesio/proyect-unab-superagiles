@@ -1,5 +1,13 @@
-import React from "react";
-import { EllipsisVertical, Loader2, Pencil, UserCheck, UserX } from "lucide-react";
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  EllipsisVertical,
+  Loader2,
+  Pencil,
+  UserCheck,
+  UserX,
+} from "lucide-react";
 import {
   Table,
   TableBody,
@@ -18,6 +26,8 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 
+const ITEMS_POR_PAGINA = 10;
+
 export function ClientesTable({
   clientes = [],
   cargando = false,
@@ -26,7 +36,35 @@ export function ClientesTable({
   onToggleActivo,
   className,
 }) {
+  const [paginaActual, setPaginaActual] = useState(1);
   const totalColumnas = esGestor ? 7 : 6;
+
+  const clientesOrdenados = useMemo(
+    () =>
+      [...clientes].sort((a, b) => {
+        const nombreA = `${a.nombre || ""} ${a.apellido || ""}`.trim();
+        const nombreB = `${b.nombre || ""} ${b.apellido || ""}`.trim();
+        return nombreA.localeCompare(nombreB, "es", { sensitivity: "base" });
+      }),
+    [clientes]
+  );
+
+  const totalPaginas = Math.max(
+    1,
+    Math.ceil(clientesOrdenados.length / ITEMS_POR_PAGINA)
+  );
+
+  useEffect(() => {
+    setPaginaActual((prev) => Math.min(prev, totalPaginas));
+  }, [clientesOrdenados.length, totalPaginas]);
+
+  const paginaSegura = Math.min(paginaActual, totalPaginas);
+  const indiceInicio = (paginaSegura - 1) * ITEMS_POR_PAGINA;
+  const indiceFin = Math.min(
+    indiceInicio + ITEMS_POR_PAGINA,
+    clientesOrdenados.length
+  );
+  const clientesPaginados = clientesOrdenados.slice(indiceInicio, indiceFin);
 
   return (
     <div
@@ -77,7 +115,7 @@ export function ClientesTable({
                   </div>
                 </TableCell>
               </TableRow>
-            ) : clientes.length === 0 ? (
+            ) : clientesPaginados.length === 0 ? (
               <TableRow>
                 <TableCell
                   colSpan={totalColumnas}
@@ -87,7 +125,7 @@ export function ClientesTable({
                 </TableCell>
               </TableRow>
             ) : (
-              clientes.map((item) => (
+              clientesPaginados.map((item) => (
                 <TableRow
                   key={item.id_cliente}
                   className={cn(
@@ -177,6 +215,45 @@ export function ClientesTable({
             )}
           </TableBody>
         </Table>
+      </div>
+
+      {/* Pie de paginación */}
+      <div className="flex shrink-0 items-center justify-between border-t bg-card px-4 py-2.5 text-xs text-muted-foreground">
+        <span>
+          {clientesOrdenados.length === 0
+            ? "Sin clientes para mostrar"
+            : `Mostrando ${indiceInicio + 1}–${indiceFin} de ${clientesOrdenados.length} clientes`}
+        </span>
+
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setPaginaActual((p) => Math.max(1, p - 1))}
+            disabled={paginaSegura <= 1}
+            className="h-7 px-2.5 gap-1 cursor-pointer"
+          >
+            <ChevronLeft className="size-3.5" />
+            <span>Anterior</span>
+          </Button>
+
+          <span className="px-2 font-medium text-foreground">
+            Página {paginaSegura} de {totalPaginas}
+          </span>
+
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setPaginaActual((p) => Math.min(totalPaginas, p + 1))}
+            disabled={paginaSegura >= totalPaginas}
+            className="h-7 px-2.5 gap-1 cursor-pointer"
+          >
+            <span>Siguiente</span>
+            <ChevronRight className="size-3.5" />
+          </Button>
+        </div>
       </div>
     </div>
   );

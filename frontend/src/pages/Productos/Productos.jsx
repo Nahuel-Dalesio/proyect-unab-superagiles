@@ -113,6 +113,11 @@ export default function Productos() {
       return;
     }
 
+    if (!/^\d+$/.test(codigoBarras)) {
+      showWarning("El código de barras debe contener únicamente números.");
+      return;
+    }
+
     if (form.precioCosto === "" || isNaN(Number(form.precioCosto))) {
       showWarning("El precio de costo es obligatorio y debe ser un número válido.");
       return;
@@ -221,7 +226,7 @@ export default function Productos() {
               variant="outline"
               type="button"
               onClick={() => setModalPreciosAbierto(true)}
-              className="gap-2 font-medium h-10 px-4 max-w-none cursor-pointer"
+              className="w-56 h-10 px-4 gap-2 font-medium max-w-none cursor-pointer"
             >
               <TrendingUp className="size-4 text-accent" />
               <span>Actualizar Precios (%)</span>
@@ -229,7 +234,7 @@ export default function Productos() {
             <Button
               variant="accent"
               onClick={abrirModal}
-              className="gap-2 font-medium h-10 px-4 max-w-none cursor-pointer"
+              className="w-56 h-10 px-4 gap-2 font-medium max-w-none cursor-pointer"
             >
               <Plus className="size-4" />
               <span>Nuevo Producto</span>
@@ -238,7 +243,7 @@ export default function Productos() {
         )}
       </div>
 
-      {/* Barra de búsqueda y filtro de stock bajo */}
+      {/* Barra de búsqueda y acciones de stock */}
       <form
         onSubmit={(e) => e.preventDefault()}
         className="mb-4 shrink-0 flex items-center justify-between gap-3"
@@ -254,17 +259,28 @@ export default function Productos() {
         />
 
         {esGestor && (
-          <Button
-            type="button"
-            variant={soloStockBajo ? "accent" : "outline"}
-            onClick={handleToggleFiltroStockBajo}
-            className="gap-2 h-10 px-4 max-w-none cursor-pointer"
-          >
-            <AlertTriangle className="size-4" />
-            <span>
-              {soloStockBajo ? "Mostrando solo stock bajo" : "Filtrar stock bajo"}
-            </span>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant={soloStockBajo ? "accent" : "outline"}
+              onClick={handleToggleFiltroStockBajo}
+              className="w-56 h-10 px-4 gap-2 font-medium max-w-none cursor-pointer"
+            >
+              <AlertTriangle className="size-4" />
+              <span>
+                {soloStockBajo ? "Mostrando solo stock bajo" : "Filtrar stock bajo"}
+              </span>
+            </Button>
+
+            <Button
+              variant="accent"
+              type="button"
+              onClick={() => setModalStockBajoAbierto(true)}
+              className="w-56 h-10 px-4 gap-2 font-medium max-w-none cursor-pointer"
+            >
+              <span>Reponer Stock</span>
+            </Button>
+          </div>
         )}
       </form>
 
@@ -277,18 +293,6 @@ export default function Productos() {
         onToggleActivo={handleToggleActivo}
         esGestor={esGestor}
       />
-
-      {/* Pie de acciones */}
-      <div className="mt-4 shrink-0 flex gap-4 justify-end">
-        <Button
-          variant="accent"
-          type="button"
-          onClick={() => setModalStockBajoAbierto(true)}
-          className="rounded-md bg-accent px-5 text-sm font-medium text-white hover:accent/85 h-10 cursor-pointer"
-        >
-          Hacer pedido
-        </Button>
-      </div>
 
       {/* Modal para agregar producto */}
       <Dialog open={modalAbierto} onOpenChange={setModalAbierto}>
@@ -306,10 +310,18 @@ export default function Productos() {
               <Input
                 id="codigoBarras"
                 name="codigoBarras"
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 placeholder="Ej: 7791234567890"
                 maxLength={50}
                 value={form.codigoBarras}
-                onChange={(e) => setForm({ ...form, codigoBarras: e.target.value })}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    codigoBarras: e.target.value.replace(/\D/g, ""),
+                  })
+                }
                 required
                 autoFocus
               />

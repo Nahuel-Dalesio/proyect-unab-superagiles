@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { UserCheck } from "lucide-react";
+import { Loader2, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,32 +12,34 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { showWarning } from "@/utils/alerts";
+import { actualizarUsuario } from "@/service/usuario.service";
+import { showError, showSuccess, showWarning } from "@/utils/alerts";
 
 export function EditarUsuarioModal({
   open,
   onOpenChange,
   usuario,
-  onGuardar,
+  currentUserId = null,
+  onSuccess,
 }) {
   const [form, setForm] = useState({
-    nombre: "",
     username: "",
-    email: "",
     rol: "cajero",
     password: "",
     activo: true,
   });
+  const [guardando, setGuardando] = useState(false);
+
+  const esUsuarioActual =
+    usuario && Number(currentUserId) === Number(usuario.idUsuario);
 
   useEffect(() => {
     if (usuario && open) {
       setForm({
-        nombre: usuario.nombre || "",
         username: usuario.username || "",
-        email: usuario.email || "",
         rol: usuario.rol || "cajero",
         password: "",
-        activo: usuario.activo ?? true,
+        activo: Boolean(usuario.activo ?? true),
       });
     }
   }, [usuario, open]);
@@ -46,25 +48,54 @@ export function EditarUsuarioModal({
     onOpenChange(false);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!usuario) return;
 
-    if (!form.username.trim()) {
+    const usernameLimpio = form.username.trim().toLowerCase();
+
+    if (!usernameLimpio) {
       showWarning("El nombre de usuario no puede quedar vacío.");
       return;
     }
 
-    onGuardar({
-      ...usuario,
-      nombre: form.nombre.trim(),
-      username: form.username.trim().toLowerCase(),
-      email: form.email.trim(),
+    if (usernameLimpio.length > 50) {
+      showWarning("El nombre de usuario admite hasta 50 caracteres.");
+      return;
+    }
+
+    if (form.password && form.password.length < 8) {
+      showWarning("La nueva contraseña debe tener al menos 8 caracteres.");
+      return;
+    }
+
+    const cambios = {
+      username: usernameLimpio,
       rol: form.rol,
       activo: form.activo,
-    });
+    };
 
-    cerrarModal();
+    if (form.password) {
+      cambios.password = form.password;
+    }
+
+    setGuardando(true);
+    try {
+      const response = await actualizarUsuario(usuario.idUsuario, cambios);
+      const usuarioActualizado = response?.user || response;
+
+      showSuccess(
+        `Usuario "@${usuarioActualizado.username || usernameLimpio}" actualizado correctamente.`,
+        "Cambios Guardados"
+      );
+
+      cerrarModal();
+      onSuccess?.(usuarioActualizado);
+    } catch (error) {
+      showError(error.message || "No se pudo actualizar el usuario.");
+    } finally {
+      setGuardando(false);
+    }
   };
 
   return (
@@ -85,22 +116,15 @@ export function EditarUsuarioModal({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 py-2">
-          <div className="space-y-1.5">
-            <Label htmlFor="editNombre">Nombre completo</Label>
-            <Input
-              id="editNombre"
-              value={form.nombre}
-              onChange={(e) => setForm({ ...form, nombre: e.target.value })}
-            />
-          </div>
-
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="editUsername">Usuario *</Label>
               <Input
                 id="editUsername"
+                maxLength={50}
                 value={form.username}
                 onChange={(e) => setForm({ ...form, username: e.target.value })}
+                disabled={guardando}
                 required
               />
             </div>
@@ -111,6 +135,7 @@ export function EditarUsuarioModal({
                 id="editRol"
                 value={form.rol}
                 onChange={(e) => setForm({ ...form, rol: e.target.value })}
+                disabled={guardando}
                 className="h-8 w-full rounded-lg border border-border bg-input px-2.5 py-1 text-sm text-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 outline-none transition-colors"
                 required
               >
@@ -122,20 +147,10 @@ export function EditarUsuarioModal({
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="editEmail">Correo electrónico</Label>
-            <Input
-              id="editEmail"
-              type="email"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-            />
-          </div>
-
-          <div className="space-y-1.5">
             <Label htmlFor="editPassword">
               Nueva contraseña{" "}
               <span className="text-xs text-muted-foreground font-normal">
-                (opcional)
+                (opcional, mínimo 8 caracteres)
               </span>
             </Label>
             <Input
@@ -144,6 +159,7 @@ export function EditarUsuarioModal({
               placeholder="Dejar en blanco para mantener actual"
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
+              disabled={guardando}
             />
           </div>
 
@@ -152,23 +168,39 @@ export function EditarUsuarioModal({
             <div className="space-y-0.5">
               <Label className="text-sm font-medium">Estado del usuario</Label>
               <p className="text-xs text-muted-foreground">
-                {form.activo
+                {esUsuarioActual
+                  ? "No podés desactivar tu propia cuenta"
+                  : form.activo
                   ? "Usuario habilitado para operar en el sistema"
                   : "Usuario deshabilitado (acceso bloqueado)"}
               </p>
             </div>
             <Switch
               checked={form.activo}
-              onCheckedChange={(checked) => setForm({ ...form, activo: checked })}
+              disabled={guardando || (esUsuarioActual && form.activo)}
+              onCheckedChange={(checked) =>
+                setForm({ ...form, activo: checked })
+              }
             />
           </div>
 
           <DialogFooter className="pt-2">
-            <Button type="button" variant="outline" onClick={cerrarModal}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={cerrarModal}
+              disabled={guardando}
+            >
               Cancelar
             </Button>
-            <Button type="submit" variant="accent">
-              Guardar Cambios
+            <Button
+              type="submit"
+              variant="accent"
+              disabled={guardando}
+              className="gap-2 cursor-pointer"
+            >
+              {guardando && <Loader2 className="size-4 animate-spin" />}
+              <span>{guardando ? "Guardando..." : "Guardar Cambios"}</span>
             </Button>
           </DialogFooter>
         </form>

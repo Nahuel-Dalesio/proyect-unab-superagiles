@@ -25,13 +25,17 @@ const AppRoutes = () => {
           <Route path="/ventas" element={<Ventas />} />
           <Route path="/clientes" element={<Clientes />} />
 
-          {/* Solo administradores y encargados pueden acceder a inventario y usuarios */}
+          {/* Administradores y encargados pueden acceder a inventario */}
           <Route
             element={
               <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.ENCARGADO]} />
             }
           >
             <Route path="/inventario" element={<Productos />} />
+          </Route>
+
+          {/* Solo administradores pueden gestionar usuarios */}
+          <Route element={<ProtectedRoute allowedRoles={[ROLES.ADMIN]} />}>
             <Route path="/usuarios" element={<Usuarios />} />
           </Route>
 

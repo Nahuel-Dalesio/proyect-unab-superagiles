@@ -18,6 +18,8 @@ export default function RegistroCliente({ value, onChange, disabled = false }) {
     apellido: "",
     tipo_documento: "DNI",
     numero_documento: "",
+    telefono: "",
+    email: "",
   };
 
   useEffect(() => {
@@ -218,12 +220,50 @@ export default function RegistroCliente({ value, onChange, disabled = false }) {
             <div className="flex-1 min-w-0">
               <Label className="mb-1 block text-xs">N° de Documento *</Label>
               <Input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={20}
                 disabled={disabled}
                 placeholder="Ej: 12345678"
                 value={nuevoCliente.numero_documento}
                 onChange={(e) =>
-                  handleCambioNuevo("numero_documento", e.target.value)
+                  handleCambioNuevo(
+                    "numero_documento",
+                    e.target.value.replace(/\D/g, "")
+                  )
                 }
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-between gap-2">
+            <div className="w-full">
+              <Label className="mb-1 block text-xs">Teléfono</Label>
+              <Input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={30}
+                disabled={disabled}
+                placeholder="Ej: 1145678901"
+                value={nuevoCliente.telefono || ""}
+                onChange={(e) =>
+                  handleCambioNuevo(
+                    "telefono",
+                    e.target.value.replace(/\D/g, "")
+                  )
+                }
+              />
+            </div>
+            <div className="w-full">
+              <Label className="mb-1 block text-xs">Correo electrónico</Label>
+              <Input
+                type="email"
+                disabled={disabled}
+                placeholder="Ej: cliente@email.com"
+                value={nuevoCliente.email || ""}
+                onChange={(e) => handleCambioNuevo("email", e.target.value)}
               />
             </div>
           </div>

@@ -47,6 +47,7 @@ export function NuevoClienteModal({ open, onOpenChange, onSuccess }) {
     const nombre = form.nombre.trim();
     const apellido = form.apellido.trim();
     const numero_documento = form.numero_documento.trim();
+    const telefono = form.telefono.trim();
 
     if (!nombre) {
       showWarning("El nombre del cliente es obligatorio.");
@@ -55,6 +56,16 @@ export function NuevoClienteModal({ open, onOpenChange, onSuccess }) {
 
     if (!numero_documento) {
       showWarning("El número de documento es obligatorio.");
+      return;
+    }
+
+    if (!/^\d+$/.test(numero_documento)) {
+      showWarning("El número de documento debe contener únicamente números.");
+      return;
+    }
+
+    if (telefono && !/^\d+$/.test(telefono)) {
+      showWarning("El teléfono debe contener únicamente números.");
       return;
     }
 
@@ -67,7 +78,7 @@ export function NuevoClienteModal({ open, onOpenChange, onSuccess }) {
         tipo_documento: form.tipo_documento,
         numero_documento,
         email: form.email.trim(),
-        telefono: form.telefono.trim(),
+        telefono,
         direccion: form.direccion.trim(),
       });
 
@@ -165,11 +176,17 @@ export function NuevoClienteModal({ open, onOpenChange, onSuccess }) {
               <Label htmlFor="numeroDocumento">Número de Documento *</Label>
               <Input
                 id="numeroDocumento"
-                placeholder="Ej: 12345678 o 20-12345678-9"
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                placeholder="Ej: 12345678"
                 maxLength={20}
                 value={form.numero_documento}
                 onChange={(e) =>
-                  setForm({ ...form, numero_documento: e.target.value })
+                  setForm({
+                    ...form,
+                    numero_documento: e.target.value.replace(/\D/g, ""),
+                  })
                 }
                 required
               />
@@ -181,11 +198,17 @@ export function NuevoClienteModal({ open, onOpenChange, onSuccess }) {
               <Label htmlFor="nuevoClienteTelefono">Teléfono</Label>
               <Input
                 id="nuevoClienteTelefono"
-                placeholder="Ej: 11-4567-8901"
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                placeholder="Ej: 1145678901"
                 maxLength={30}
                 value={form.telefono}
                 onChange={(e) =>
-                  setForm({ ...form, telefono: e.target.value })
+                  setForm({
+                    ...form,
+                    telefono: e.target.value.replace(/\D/g, ""),
+                  })
                 }
               />
             </div>
