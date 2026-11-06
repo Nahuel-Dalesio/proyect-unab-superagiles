@@ -39,9 +39,9 @@ export function EditarClienteModal({
         nombre: cliente.nombre || "",
         apellido: cliente.apellido || "",
         tipo_documento: cliente.tipo_documento || "DNI",
-        numero_documento: cliente.numero_documento || "",
+        numero_documento: String(cliente.numero_documento || "").replace(/\D/g, ""),
         email: cliente.email || "",
-        telefono: cliente.telefono || "",
+        telefono: String(cliente.telefono || "").replace(/\D/g, ""),
         direccion: cliente.direccion || "",
         activo: Boolean(cliente.activo ?? true),
       });
@@ -61,6 +61,7 @@ export function EditarClienteModal({
     const nombre = form.nombre.trim();
     const apellido = form.apellido.trim();
     const numero_documento = form.numero_documento.trim();
+    const telefono = form.telefono.trim();
 
     if (!nombre) {
       showWarning("El nombre del cliente es obligatorio.");
@@ -69,6 +70,16 @@ export function EditarClienteModal({
 
     if (!numero_documento) {
       showWarning("El número de documento es obligatorio.");
+      return;
+    }
+
+    if (!/^\d+$/.test(numero_documento)) {
+      showWarning("El número de documento debe contener únicamente números.");
+      return;
+    }
+
+    if (telefono && !/^\d+$/.test(telefono)) {
+      showWarning("El teléfono debe contener únicamente números.");
       return;
     }
 
@@ -81,7 +92,7 @@ export function EditarClienteModal({
         tipo_documento: form.tipo_documento,
         numero_documento,
         email: form.email.trim(),
-        telefono: form.telefono.trim(),
+        telefono,
         direccion: form.direccion.trim(),
         activo: form.activo,
       });
@@ -177,10 +188,16 @@ export function EditarClienteModal({
               <Label htmlFor="editNumeroDocumento">Número de Documento *</Label>
               <Input
                 id="editNumeroDocumento"
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 maxLength={20}
                 value={form.numero_documento}
                 onChange={(e) =>
-                  setForm({ ...form, numero_documento: e.target.value })
+                  setForm({
+                    ...form,
+                    numero_documento: e.target.value.replace(/\D/g, ""),
+                  })
                 }
                 required
               />
@@ -192,10 +209,16 @@ export function EditarClienteModal({
               <Label htmlFor="editClienteTelefono">Teléfono</Label>
               <Input
                 id="editClienteTelefono"
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 maxLength={30}
                 value={form.telefono}
                 onChange={(e) =>
-                  setForm({ ...form, telefono: e.target.value })
+                  setForm({
+                    ...form,
+                    telefono: e.target.value.replace(/\D/g, ""),
+                  })
                 }
               />
             </div>

@@ -1,14 +1,22 @@
-import { useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { Plus, Users } from "lucide-react";
+import { AuthContext } from "@/context/AuthContext";
+import {
+  getUsuarios,
+  actualizarUsuario,
+  desactivarUsuario,
+} from "@/service/usuario.service";
 import { Button } from "@/components/ui/button";
 import { UsuariosTable } from "@/components/UsuariosTable";
 import { NuevoUsuarioModal } from "@/components/NuevoUsuarioModal";
 import { EditarUsuarioModal } from "@/components/EditarUsuarioModal";
-import { MOCK_USUARIOS } from "@/mocks/usuarios.mock";
-import { showSuccess } from "@/utils/alerts";
+import { showError, showSuccess } from "@/utils/alerts";
 
 export default function Usuarios() {
-  const [usuarios, setUsuarios] = useState(MOCK_USUARIOS);
+  const { user } = useContext(AuthContext);
+
+  const [usuarios, setUsuarios] = useState([]);
+  const [cargando, setCargando] = useState(true);
   const [busqueda, setBusqueda] = useState("");
 
   // Modales
@@ -16,32 +24,58 @@ export default function Usuarios() {
   const [modalEditarAbierto, setModalEditarAbierto] = useState(false);
   const [usuarioAEditar, setUsuarioAEditar] = useState(null);
 
-  // Alternar estado activo / inactivo directamente desde la tabla
-  const handleToggleActivo = (idUsuario) => {
-    setUsuarios((prev) =>
-      prev.map((u) => {
-        if (u.idUsuario === idUsuario) {
-          const nuevoEstado = !u.activo;
-          showSuccess(
-            `Usuario "${u.username}" ${
-              nuevoEstado ? "activado" : "desactivado"
-            } correctamente.`,
-            "Estado actualizado"
-          );
-          return { ...u, activo: nuevoEstado };
-        }
-        return u;
-      })
-    );
-  };
+  const cargarUsuarios = useCallback(async () => {
+    setCargando(true);
+    try {
+      const data = await getUsuarios();
+      setUsuarios(Array.isArray(data) ? data : []);
+    } catch (error) {
+      showError(
+        error.status
+          ? error.message
+          : "Error de conexión al obtener los usuarios"
+      );
+    } finally {
+      setCargando(false);
+    }
+  }, []);
 
-  // Crear usuario
-  const handleCrearUsuario = (nuevoUsuario) => {
-    setUsuarios((prev) => [nuevoUsuario, ...prev]);
-    showSuccess(
-      `Usuario "${nuevoUsuario.username}" registrado exitosamente.`,
-      "Usuario Creado"
-    );
+  useEffect(() => {
+    cargarUsuarios();
+  }, [cargarUsuarios]);
+
+  // Alternar estado activo / inactivo contra el backend
+  const handleToggleActivo = async (usuario) => {
+    if (!usuario) return;
+
+    const nuevoEstado = !usuario.activo;
+
+    try {
+      if (nuevoEstado) {
+        await actualizarUsuario(usuario.idUsuario, { activo: true });
+      } else {
+        await desactivarUsuario(usuario.idUsuario);
+      }
+
+      setUsuarios((prev) =>
+        prev.map((u) =>
+          u.idUsuario === usuario.idUsuario ? { ...u, activo: nuevoEstado } : u
+        )
+      );
+
+      showSuccess(
+        `Usuario "@${usuario.username}" ${
+          nuevoEstado ? "activado" : "desactivado"
+        } correctamente.`,
+        "Estado actualizado"
+      );
+    } catch (error) {
+      showError(
+        error.status
+          ? error.message
+          : "Error al actualizar el estado del usuario"
+      );
+    }
   };
 
   // Editar usuario
@@ -50,27 +84,14 @@ export default function Usuarios() {
     setModalEditarAbierto(true);
   };
 
-  const handleGuardarEdicion = (usuarioActualizado) => {
-    setUsuarios((prev) =>
-      prev.map((u) =>
-        u.idUsuario === usuarioActualizado.idUsuario ? usuarioActualizado : u
-      )
-    );
-    showSuccess(
-      `Usuario "${usuarioActualizado.username}" actualizado correctamente.`,
-      "Cambios Guardados"
-    );
-  };
-
-  // Filtrado de usuarios
+  // Filtrado de usuarios por username, rol o ID
   const usuariosFiltrados = usuarios.filter((u) => {
     const term = busqueda.toLowerCase().trim();
     if (!term) return true;
     return (
-      (u.nombre && u.nombre.toLowerCase().includes(term)) ||
       (u.username && u.username.toLowerCase().includes(term)) ||
       (u.rol && u.rol.toLowerCase().includes(term)) ||
-      (u.email && u.email.toLowerCase().includes(term))
+      (u.idUsuario && String(u.idUsuario).includes(term))
     );
   });
 
@@ -81,7 +102,7 @@ export default function Usuarios() {
         <div className="flex flex-row items-center">
           <Users
             strokeWidth={1.5}
-            className="size-12 p-2 border border-border rounded-lg bg-card shrink-0 text-accent"
+            className="size-12 p-2 border border-border rounded-lg bg-card shrink-0"
           />
           <div className="px-3">
             <div className="text-lg font-semibold">Usuarios</div>
@@ -107,7 +128,7 @@ export default function Usuarios() {
           type="text"
           value={busqueda}
           onChange={(e) => setBusqueda(e.target.value)}
-          placeholder="Buscar por usuario, nombre, rol o email..."
+          placeholder="Buscar por usuario o rol..."
           className="w-1/4 min-w-72 rounded-md border border-border bg-input px-4 py-2.5 text-sm outline-none shadow-2xs placeholder:text-muted-foreground"
         />
       </form>
@@ -115,6 +136,8 @@ export default function Usuarios() {
       {/* Tabla de Usuarios */}
       <UsuariosTable
         usuarios={usuariosFiltrados}
+        cargando={cargando}
+        currentUserId={user?.id}
         onEditarUsuario={handleAbrirEditar}
         onToggleActivo={handleToggleActivo}
       />
@@ -123,7 +146,7 @@ export default function Usuarios() {
       <NuevoUsuarioModal
         open={modalNuevoAbierto}
         onOpenChange={setModalNuevoAbierto}
-        onGuardar={handleCrearUsuario}
+        onSuccess={cargarUsuarios}
       />
 
       {/* Modal para editar usuario */}
@@ -131,7 +154,8 @@ export default function Usuarios() {
         open={modalEditarAbierto}
         onOpenChange={setModalEditarAbierto}
         usuario={usuarioAEditar}
-        onGuardar={handleGuardarEdicion}
+        currentUserId={user?.id}
+        onSuccess={cargarUsuarios}
       />
     </div>
   );

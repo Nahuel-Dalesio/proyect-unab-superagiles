@@ -32,6 +32,8 @@ const ESTADO_FACTURA_INICIAL = {
     apellido: "",
     tipo_documento: "DNI",
     numero_documento: "",
+    telefono: "",
+    email: "",
   },
 };
 
@@ -146,6 +148,8 @@ export default function CalculadoraCambio({
             tipo_documento: datosFactura.nuevoCliente.tipo_documento,
             numero_documento:
               datosFactura.nuevoCliente.numero_documento.trim(),
+            telefono: (datosFactura.nuevoCliente.telefono || "").trim(),
+            email: (datosFactura.nuevoCliente.email || "").trim(),
           });
           idCliente = resCliente?.client?.id_cliente ?? null;
         } else {

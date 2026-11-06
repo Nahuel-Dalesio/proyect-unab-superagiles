@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { showError, showSuccess, showWarning } from "@/utils/alerts";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,8 +17,15 @@ export default function AbrirCajaModal({
   onSuccess,
   formatoPrecio,
 }) {
-  const [montoInicial, setMontoInicial] = useState("");
+  const [montoInicial, setMontoInicial] = useState("0");
   const [enviando, setEnviando] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setMontoInicial("0");
+      setEnviando(false);
+    }
+  }, [open]);
 
   const format =
     formatoPrecio ||
@@ -30,7 +37,7 @@ export default function AbrirCajaModal({
 
   const handleOpenChange = (abierto) => {
     if (!abierto) {
-      setMontoInicial("");
+      setMontoInicial("0");
       setEnviando(false);
     }
     onOpenChange?.(abierto);
@@ -39,10 +46,10 @@ export default function AbrirCajaModal({
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const monto = Number(montoInicial);
+    const monto = montoInicial === "" ? 0 : Number(montoInicial);
 
-    if (montoInicial === "" || !Number.isFinite(monto) || monto < 0) {
-      showWarning("Ingresá un monto inicial válido.");
+    if (!Number.isFinite(monto) || monto < 0) {
+      showWarning("Ingresá un monto inicial válido (mayor o igual a 0).");
       return;
     }
 

@@ -1,5 +1,7 @@
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
+  ChevronLeft,
+  ChevronRight,
   EllipsisVertical,
   PackageCheck,
   PackagePlus,
@@ -24,6 +26,8 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 
+const ITEMS_POR_PAGINA = 10;
+
 const defaultFormatoPrecio = (valor) =>
   `$${Number(valor).toLocaleString("es-AR", {
     minimumFractionDigits: 2,
@@ -39,7 +43,36 @@ export function ProductosTable({
   className,
   esGestor = true,
 }) {
+  const [paginaActual, setPaginaActual] = useState(1);
   const totalColumnas = esGestor ? 7 : 5;
+
+  const inventarioOrdenado = useMemo(
+    () =>
+      [...inventario].sort((a, b) =>
+        String(a.nombre || "").localeCompare(String(b.nombre || ""), "es", {
+          sensitivity: "base",
+        })
+      ),
+    [inventario]
+  );
+
+  const totalPaginas = Math.max(
+    1,
+    Math.ceil(inventarioOrdenado.length / ITEMS_POR_PAGINA)
+  );
+
+  // Si cambia la cantidad de resultados por búsqueda o filtro, ajustar la página actual
+  useEffect(() => {
+    setPaginaActual((prev) => Math.min(prev, totalPaginas));
+  }, [inventarioOrdenado.length, totalPaginas]);
+
+  const paginaSegura = Math.min(paginaActual, totalPaginas);
+  const indiceInicio = (paginaSegura - 1) * ITEMS_POR_PAGINA;
+  const indiceFin = Math.min(
+    indiceInicio + ITEMS_POR_PAGINA,
+    inventarioOrdenado.length
+  );
+  const inventarioPaginado = inventarioOrdenado.slice(indiceInicio, indiceFin);
 
   return (
     <div
@@ -82,7 +115,7 @@ export function ProductosTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {inventario.length === 0 ? (
+            {inventarioPaginado.length === 0 ? (
               <TableRow>
                 <TableCell
                   colSpan={totalColumnas}
@@ -92,7 +125,7 @@ export function ProductosTable({
                 </TableCell>
               </TableRow>
             ) : (
-              inventario.map((item) => {
+              inventarioPaginado.map((item) => {
                 const id = item.idProducto ?? item.id_producto;
                 const isActivo = item.activo ?? true;
 
@@ -197,6 +230,45 @@ export function ProductosTable({
             )}
           </TableBody>
         </Table>
+      </div>
+
+      {/* Pie de paginación */}
+      <div className="flex shrink-0 items-center justify-between border-t bg-card px-4 py-2.5 text-xs text-muted-foreground">
+        <span>
+          {inventarioOrdenado.length === 0
+            ? "Sin productos para mostrar"
+            : `Mostrando ${indiceInicio + 1}–${indiceFin} de ${inventarioOrdenado.length} productos`}
+        </span>
+
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setPaginaActual((p) => Math.max(1, p - 1))}
+            disabled={paginaSegura <= 1}
+            className="h-7 px-2.5 gap-1 cursor-pointer"
+          >
+            <ChevronLeft className="size-3.5" />
+            <span>Anterior</span>
+          </Button>
+
+          <span className="px-2 font-medium text-foreground">
+            Página {paginaSegura} de {totalPaginas}
+          </span>
+
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setPaginaActual((p) => Math.min(totalPaginas, p + 1))}
+            disabled={paginaSegura >= totalPaginas}
+            className="h-7 px-2.5 gap-1 cursor-pointer"
+          >
+            <span>Siguiente</span>
+            <ChevronRight className="size-3.5" />
+          </Button>
+        </div>
       </div>
     </div>
   );

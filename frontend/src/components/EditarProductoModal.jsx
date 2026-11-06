@@ -73,6 +73,11 @@ export function EditarProductoModal({
       return;
     }
 
+    if (!/^\d+$/.test(codigoBarras)) {
+      showWarning("El código de barras debe contener únicamente números.");
+      return;
+    }
+
     if (codigoBarras.length > MAX_CODIGO_BARRAS) {
       showWarning(
         `El código de barras admite hasta ${MAX_CODIGO_BARRAS} caracteres.`
@@ -188,11 +193,16 @@ export function EditarProductoModal({
               id="editCodigoBarras"
               name="codigoBarras"
               type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
               maxLength={MAX_CODIGO_BARRAS}
               placeholder="Escaneá o escribí el código"
               value={form.codigoBarras}
               onChange={(e) =>
-                setForm({ ...form, codigoBarras: e.target.value })
+                setForm({
+                  ...form,
+                  codigoBarras: e.target.value.replace(/\D/g, ""),
+                })
               }
               required
             />

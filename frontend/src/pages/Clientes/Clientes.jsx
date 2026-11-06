@@ -106,7 +106,7 @@ export default function Clientes() {
         <div className="flex flex-row items-center">
           <UserCheck
             strokeWidth={1.5}
-            className="size-12 p-2 border border-border rounded-lg bg-card shrink-0 text-accent"
+            className="size-12 p-2 border border-border rounded-lg bg-card shrink-0"
           />
           <div className="px-3">
             <div className="text-lg font-semibold">Clientes</div>
