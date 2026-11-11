@@ -8,6 +8,7 @@ import CalculadoraCambio from "@/components/CalculadoraCambio";
 import Clientes from "@/pages/Clientes/Clientes";
 import Usuarios from "@/pages/Usuarios/Usuarios";
 import Ventas from "@/pages/Ventas/Ventas";
+import CierresCaja from "@/pages/CierresCaja/CierresCaja";
 import { ROLES } from "@/utils/roles";
 
 const AppRoutes = () => {
@@ -25,13 +26,14 @@ const AppRoutes = () => {
           <Route path="/ventas" element={<Ventas />} />
           <Route path="/clientes" element={<Clientes />} />
 
-          {/* Administradores y encargados pueden acceder a inventario */}
+          {/* Administradores y encargados pueden acceder a inventario y cierres de caja */}
           <Route
             element={
               <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.ENCARGADO]} />
             }
           >
             <Route path="/inventario" element={<Productos />} />
+            <Route path="/cierres-caja" element={<CierresCaja />} />
           </Route>
 
           {/* Solo administradores pueden gestionar usuarios */}

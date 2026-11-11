@@ -6,6 +6,7 @@ const SELECT_CAJA = `
     c.id_cierre AS idCierre,
     c.idUsuario,
     u.username,
+    u.rol,
     c.fecha_apertura AS fechaApertura,
     c.fecha_cierre AS fechaCierre,
     c.monto_inicial AS montoInicial,
@@ -34,6 +35,14 @@ export const findCajaById = async (idCierre) => {
   return rows[0];
 };
 
+export const findAllCierresCaja = async () => {
+  const [rows] = await pool.query(
+    `${SELECT_CAJA} ORDER BY c.fecha_apertura DESC, c.id_cierre DESC`
+  );
+
+  return rows;
+};
+
 export const createApertura = async ({ idUsuario, montoInicial }) => {
   const [result] = await pool.query(
     `INSERT INTO cierres_caja (idUsuario, fecha_apertura, monto_inicial, estado)
@@ -51,6 +60,7 @@ export const getResumenVentasDesde = async (idCierre) => {
   const [rows] = await pool.query(
     `SELECT
        v.medio_pago AS medioPago,
+       COUNT(v.id_venta) AS cantidad,
        COALESCE(SUM(v.total), 0) AS subtotal
      FROM ventas v
      JOIN cierres_caja c ON c.id_cierre = ?
@@ -69,9 +79,13 @@ export const getResumenVentasDesde = async (idCierre) => {
     qr: 0,
   };
 
+  let cantidadOperaciones = 0;
+
   for (const row of rows) {
     const medio = row.medioPago;
     const monto = Number(row.subtotal) || 0;
+    const cant = Number(row.cantidad) || 0;
+    cantidadOperaciones += cant;
     if (medio in desglose) {
       desglose[medio] = monto;
     }
@@ -92,6 +106,7 @@ export const getResumenVentasDesde = async (idCierre) => {
     ventasEfectivo,
     ventasTransferencia,
     ventasTarjeta,
+    cantidadOperaciones,
     desgloseMediosPago: desglose,
   };
 };
