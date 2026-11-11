@@ -4,6 +4,10 @@ import { apiRequest } from "./api";
 // Devuelve { caja, esPropietario }. caja es null si no hay ninguna abierta.
 export const getCajaAbierta = () => apiRequest("/api/caja/abierta");
 
+// GET /api/caja/cierres
+// Devuelve el listado de cierres de caja (solo admin y encargado).
+export const getHistorialCierres = () => apiRequest("/api/caja/cierres");
+
 // POST /api/caja/apertura
 // Devuelve { message, caja }. Todos los roles pueden abrir.
 export const abrirCaja = (montoInicial) =>

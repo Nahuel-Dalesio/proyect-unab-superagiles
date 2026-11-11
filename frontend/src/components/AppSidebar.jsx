@@ -1,6 +1,7 @@
 import { useContext, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
+  ClipboardCheck,
   History,
   LogOut,
   Package,
@@ -39,6 +40,12 @@ const MENU_ITEMS = [
     path: "/ventas",
     icon: History,
     roles: [ROLES.ADMIN, ROLES.ENCARGADO, ROLES.CAJERO],
+  },
+  {
+    label: "Cierres de Caja",
+    path: "/cierres-caja",
+    icon: ClipboardCheck,
+    roles: [ROLES.ADMIN, ROLES.ENCARGADO],
   },
   {
     label: "Inventario",

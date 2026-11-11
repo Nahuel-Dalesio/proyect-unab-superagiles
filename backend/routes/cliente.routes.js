@@ -13,41 +13,41 @@ import {
 
 const router = Router();
 
-// Admin y cajero pueden buscar clientes durante una venta.
+// Todos los roles autenticados pueden buscar clientes y consultar uno por ID.
 router.get(
   "/clientes",
   verifyToken,
-  authorizeRoles("admin", "cajero"),
+  authorizeRoles("admin", "encargado", "cajero"),
   getClients
 );
 
 router.get(
   "/clientes/:id",
   verifyToken,
-  authorizeRoles("admin", "cajero"),
+  authorizeRoles("admin", "encargado", "cajero"),
   getClient
 );
 
-// El cajero también puede hacer el alta rápida de un cliente.
+// Todos los roles pueden hacer el alta de un cliente (inclusive desde Caja).
 router.post(
   "/clientes",
   verifyToken,
-  authorizeRoles("admin", "cajero"),
+  authorizeRoles("admin", "encargado", "cajero"),
   createClient
 );
 
-// La administración completa queda reservada al admin.
+// La edición y baja lógica queda reservada a admin y encargado.
 router.put(
   "/clientes/:id",
   verifyToken,
-  authorizeRoles("admin"),
+  authorizeRoles("admin", "encargado"),
   updateClient
 );
 
 router.delete(
   "/clientes/:id",
   verifyToken,
-  authorizeRoles("admin"),
+  authorizeRoles("admin", "encargado"),
   deactivateClient
 );
 

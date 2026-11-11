@@ -2,6 +2,7 @@ import {
   abrirCaja as abrirCajaData,
   cerrarCaja as cerrarCajaData,
   obtenerCajaAbierta,
+  obtenerHistorialCierres,
   CajaError,
 } from "../service/caja.service.js";
 
@@ -28,6 +29,20 @@ export const getCajaAbierta = async (req, res) => {
 
     return res.status(500).json({
       message: "Error interno al obtener la caja abierta",
+    });
+  }
+};
+
+export const getCierresCaja = async (req, res) => {
+  try {
+    const cierres = await obtenerHistorialCierres();
+
+    return res.status(200).json(cierres);
+  } catch (error) {
+    console.error("Error al obtener el historial de cierres de caja:", error);
+
+    return res.status(500).json({
+      message: "Error interno al obtener el historial de cierres de caja",
     });
   }
 };

@@ -18,13 +18,13 @@ CREATE TABLE IF NOT EXISTS usuario (
     idUsuario INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(50) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
-    rol ENUM('cajero', 'admin') NOT NULL,
+    rol ENUM('admin', 'encargado', 'cajero') NOT NULL,
     activo BOOLEAN DEFAULT true
 );
 
--- Si usuario ya existia con otro charset, se convierte a utf8mb4.
--- Los datos se conservan.
+-- Si usuario ya existia con otro charset o sin el rol encargado, se actualiza conservando los datos.
 ALTER TABLE usuario CONVERT TO CHARACTER SET utf8mb4;
+ALTER TABLE usuario MODIFY COLUMN rol ENUM('admin', 'encargado', 'cajero') NOT NULL;
 
 -- El usuario admin NO se inserta aca para no versionar un hash fijo.
 -- Se crea con el script seed.js (hash bcrypt generado en cada entorno).

@@ -1,6 +1,7 @@
 import {
   findOpenCaja,
   findCajaById,
+  findAllCierresCaja,
   createApertura,
   getResumenVentasDesde,
   closeCaja,
@@ -35,19 +36,28 @@ const round2 = (n) => Math.round(n * 100) / 100;
 const mapCaja = (caja) => {
   if (!caja) return null;
 
+  const montoInicial = Number(caja.montoInicial ?? 0);
+  const ventasEfectivo =
+    caja.ventasEfectivo === undefined ? 0 : Number(caja.ventasEfectivo);
+  const montoEsperado = round2(montoInicial + ventasEfectivo);
+
   return {
     ...caja,
-    montoInicial: Number(caja.montoInicial),
+    montoInicial,
     montoFinal: caja.montoFinal === null ? null : Number(caja.montoFinal),
     totalVentas: caja.totalVentas === null ? null : Number(caja.totalVentas),
-    ventasEfectivo:
-      caja.ventasEfectivo === undefined ? 0 : Number(caja.ventasEfectivo),
+    ventasEfectivo,
     ventasTransferencia:
       caja.ventasTransferencia === undefined
         ? 0
         : Number(caja.ventasTransferencia),
     ventasTarjeta:
       caja.ventasTarjeta === undefined ? 0 : Number(caja.ventasTarjeta),
+    cantidadOperaciones:
+      caja.cantidadOperaciones === undefined
+        ? 0
+        : Number(caja.cantidadOperaciones),
+    montoEsperado,
     diferencia: caja.diferencia === null ? null : Number(caja.diferencia),
   };
 };
@@ -66,12 +76,41 @@ export const obtenerCajaAbierta = async () => {
   });
 };
 
-export const abrirCaja = async (idUsuario, montoInicialValue) => {
+// Devuelve el historial completo de aperturas y cierres de caja con su desglose
+export const obtenerHistorialCierres = async () => {
+  const cierres = await findAllCierresCaja();
+
+  const cierresConResumen = await Promise.all(
+    cierres.map(async (cierre) => {
+      const resumen = await getResumenVentasDesde(cierre.idCierre);
+      return mapCaja({
+        ...cierre,
+        ...resumen,
+        // Si ya estaba cerrada, respetamos totalVentas guardado o el calculado
+        totalVentas:
+          cierre.estado === "cerrada" && cierre.totalVentas !== null
+            ? Number(cierre.totalVentas)
+            : resumen.totalVentas,
+      });
+    })
+  );
+
+  return cierresConResumen;
+};
+
+export const abrirCaja = async (idUsuario, montoInicialValue = 0) => {
   if (!isValidId(idUsuario)) {
     throw new CajaError("INVALID_ID", "El usuario no es válido");
   }
 
-  const montoInicial = parseNumber(montoInicialValue);
+  const valorNormalizado =
+    montoInicialValue === undefined ||
+    montoInicialValue === null ||
+    montoInicialValue === ""
+      ? 0
+      : montoInicialValue;
+
+  const montoInicial = parseNumber(valorNormalizado);
 
   if (!isValidMonto(montoInicial)) {
     throw new CajaError(
@@ -113,6 +152,7 @@ export const abrirCaja = async (idUsuario, montoInicialValue) => {
     ventasEfectivo: 0,
     ventasTransferencia: 0,
     ventasTarjeta: 0,
+    cantidadOperaciones: 0,
   });
 };
 

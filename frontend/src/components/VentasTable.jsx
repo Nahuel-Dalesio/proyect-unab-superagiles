@@ -150,7 +150,7 @@ export function VentasTable({
                         className={cn(
                           "inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold border",
                           anulada
-                            ? "bg-destructive/10 text-destructive border-destructive/20"
+                            ? "bg-red-500/10 text-red-700 dark:bg-red-500/15 dark:text-red-400 border-red-500/25"
                             : "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20"
                         )}
                       >
@@ -214,4 +214,3 @@ export function VentasTable({
 }
 
 export default VentasTable;
-

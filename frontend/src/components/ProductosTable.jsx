@@ -167,7 +167,7 @@ export function ProductosTable({
                         className={cn(
                           "inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium border",
                           item.stock <= (item.stockMinimo ?? 5)
-                            ? "bg-destructive/10 text-destructive border-destructive/20 font-semibold"
+                            ? "bg-red-500/10 text-red-700 dark:bg-red-500/15 dark:text-red-400 border-red-500/25 font-semibold"
                             : "bg-muted text-foreground border-border"
                         )}
                       >

@@ -135,7 +135,7 @@ export function StockBajoModal({
                           className={cn(
                             "inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold border",
                             agotado
-                              ? "bg-destructive/15 text-destructive border-destructive/30"
+                              ? "bg-red-500/10 text-red-700 dark:bg-red-500/15 dark:text-red-400 border-red-500/25"
                               : "bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30"
                           )}
                         >
@@ -186,4 +186,3 @@ export function StockBajoModal({
 }
 
 export default StockBajoModal;
-
