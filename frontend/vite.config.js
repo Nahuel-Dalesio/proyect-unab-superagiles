@@ -3,8 +3,8 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { defineConfig } from 'vite'
 
-// https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ command }) => ({
+  base: command === 'build' ? '/proyect-unab-superagiles/' : '/',
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
@@ -16,4 +16,4 @@ export default defineConfig({
       usePolling: true,
     },
   },
-})
+}))
