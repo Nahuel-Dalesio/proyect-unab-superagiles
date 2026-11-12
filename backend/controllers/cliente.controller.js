@@ -3,6 +3,7 @@ import {
   getClient as getClientData,
   registerClient,
   updateClient as updateClientData,
+  configureClientAccount as configureClientAccountData,
   ClientError,
 } from "../service/cliente.service.js";
 
@@ -122,6 +123,32 @@ export const deactivateClient = async (req, res) => {
 
     return res.status(500).json({
       message: "Error interno al desactivar el cliente",
+    });
+  }
+};
+
+export const configureCurrentAccount = async (req, res) => {
+  try {
+    const client = await configureClientAccountData(
+      req.params.id,
+      req.body
+    );
+
+    return res.status(200).json({
+      message: "Cuenta corriente actualizada correctamente",
+      client,
+    });
+  } catch (error) {
+    const response = handleClientError(error, res);
+    if (response) return response;
+
+    console.error(
+      "Error al configurar la cuenta corriente:",
+      error
+    );
+
+    return res.status(500).json({
+      message: "Error interno al configurar la cuenta corriente",
     });
   }
 };

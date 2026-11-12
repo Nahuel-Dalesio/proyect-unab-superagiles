@@ -63,7 +63,13 @@ CREATE TABLE IF NOT EXISTS clientes (
     email VARCHAR(100),
     telefono VARCHAR(30),
     direccion VARCHAR(255),
-    activo BOOLEAN NOT NULL DEFAULT true
+    cuenta_corriente_habilitada BOOLEAN NOT NULL DEFAULT false,
+    limite_credito DECIMAL(10,2) NOT NULL DEFAULT 0,
+    deuda_actual DECIMAL(10,2) NOT NULL DEFAULT 0,
+    activo BOOLEAN NOT NULL DEFAULT true,
+    CHECK (limite_credito >= 0),
+    CHECK (deuda_actual >= 0),
+    CHECK (deuda_actual <= limite_credito)
 );
 
 -- ---------------------------------------------------------
@@ -76,9 +82,17 @@ CREATE TABLE IF NOT EXISTS ventas (
     fecha_hora DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     idUsuario INT NOT NULL,
     id_cliente INT NULL,
-    medio_pago ENUM('efectivo', 'debito', 'credito', 'transferencia', 'qr') NOT NULL,
-    total DECIMAL(10,2) NOT NULL,
-    estado ENUM('completada', 'anulada') NOT NULL DEFAULT 'completada',
+   medio_pago ENUM(
+    'efectivo',
+    'debito',
+    'credito',
+    'transferencia',
+    'qr',
+    'cuenta_corriente'
+) NOT NULL,
+total DECIMAL(10,2) NOT NULL,
+estado ENUM('completada', 'anulada') NOT NULL DEFAULT 'completada',
+estado_pago ENUM('pagada', 'pendiente', 'cancelada') NOT NULL DEFAULT 'pagada',
     CHECK (total >= 0),
     -- Reportes por fecha (todas las ventas entre dos fechas)
     INDEX idx_ventas_fecha (fecha_hora),

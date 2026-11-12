@@ -5,6 +5,7 @@ import {
   createClient,
   updateClient,
   deactivateClient,
+  configureCurrentAccount,
 } from "../controllers/cliente.controller.js";
 import {
   verifyToken,
@@ -42,6 +43,15 @@ router.put(
   verifyToken,
   authorizeRoles("admin", "encargado"),
   updateClient
+);
+
+// Solo el administrador puede habilitar la cuenta corriente
+// y establecer el límite de crédito.
+router.patch(
+  "/clientes/:id/cuenta-corriente",
+  verifyToken,
+  authorizeRoles("admin"),
+  configureCurrentAccount
 );
 
 router.delete(
