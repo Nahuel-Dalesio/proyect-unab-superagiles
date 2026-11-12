@@ -40,15 +40,18 @@ const parseClientId = (value) => {
 const optionalText = (value) =>
   String(value ?? "").trim() || null;
 
-const parseActive = (value) => {
+const parseBooleanField = (value, errorMessage) => {
   if (value === true || value === 1 || value === "1") return true;
   if (value === false || value === 0 || value === "0") return false;
 
-  throw new ClientError(
-    "INVALID_VALUES",
+  throw new ClientError("INVALID_VALUES", errorMessage);
+};
+
+const parseActive = (value) =>
+  parseBooleanField(
+    value,
     "El estado activo debe ser verdadero o falso"
   );
-};
 
 const parseCreditLimit = (value) => {
   const limit = Number(value);
@@ -137,9 +140,10 @@ const serializeClient = (client) => {
     ),
     limite_credito: limiteCredito,
     deuda_actual: deudaActual,
-    credito_disponible: Math.round(
-      (limiteCredito - deudaActual) * 100
-    ) / 100,
+    credito_disponible: Math.max(
+      0,
+      Math.round((limiteCredito - deudaActual) * 100) / 100
+    ),
   };
 };
 
@@ -176,6 +180,19 @@ export const registerClient = async (data = {}) => {
   const email = optionalText(data.email);
   const telefono = optionalText(data.telefono);
   const direccion = optionalText(data.direccion);
+
+  const limite_credito =
+    data.limite_credito !== undefined && data.limite_credito !== ""
+      ? parseCreditLimit(data.limite_credito)
+      : 0;
+
+  const cuenta_corriente_habilitada =
+    data.cuenta_corriente_habilitada !== undefined
+      ? parseBooleanField(
+          data.cuenta_corriente_habilitada,
+          "La habilitación de cuenta corriente debe ser verdadera o falsa"
+        )
+      : limite_credito > 0;
 
   if (!nombre || !tipo_documento || !numero_documento) {
     throw new ClientError(
@@ -225,9 +242,11 @@ export const registerClient = async (data = {}) => {
     email,
     telefono,
     direccion,
+    cuenta_corriente_habilitada,
+    limite_credito: cuenta_corriente_habilitada ? limite_credito : 0,
   });
 
-  return {
+  return serializeClient({
     id_cliente,
     nombre,
     apellido,
@@ -236,8 +255,11 @@ export const registerClient = async (data = {}) => {
     email,
     telefono,
     direccion,
+    cuenta_corriente_habilitada,
+    limite_credito: cuenta_corriente_habilitada ? limite_credito : 0,
+    deuda_actual: 0,
     activo: true,
-  };
+  });
 };
 
 export const updateClient = async (id, data = {}) => {
@@ -287,6 +309,21 @@ export const updateClient = async (id, data = {}) => {
 
   if (data.activo !== undefined) {
     changes.activo = parseActive(data.activo);
+  }
+
+  if (data.cuenta_corriente_habilitada !== undefined) {
+    changes.cuenta_corriente_habilitada = parseBooleanField(
+      data.cuenta_corriente_habilitada,
+      "La habilitación de cuenta corriente debe ser verdadera o falsa"
+    );
+  }
+
+  if (data.limite_credito !== undefined) {
+    changes.limite_credito = parseCreditLimit(data.limite_credito);
+  }
+
+  if (data.deuda_actual !== undefined) {
+    changes.deuda_actual = parseCreditLimit(data.deuda_actual);
   }
 
   if (Object.keys(changes).length === 0) {
@@ -349,6 +386,32 @@ export const updateClient = async (id, data = {}) => {
     }
   }
 
+  // Si se deshabilita la cuenta corriente y el límite pasa a 0, también reiniciamos deuda_actual si no fue enviada
+  if (
+    changes.cuenta_corriente_habilitada === false &&
+    changes.limite_credito === 0 &&
+    changes.deuda_actual === undefined
+  ) {
+    changes.deuda_actual = 0;
+  }
+
+  const deudaFinal =
+    changes.deuda_actual !== undefined
+      ? changes.deuda_actual
+      : Number(existingClient.deuda_actual ?? 0);
+
+  const limiteFinal =
+    changes.limite_credito !== undefined
+      ? changes.limite_credito
+      : Number(existingClient.limite_credito ?? 0);
+
+  if (limiteFinal < deudaFinal) {
+    throw new ClientError(
+      "INVALID_VALUES",
+      "El límite de cuenta corriente no puede ser menor que el saldo ya utilizado por el cliente"
+    );
+  }
+
   await updateClientById(idCliente, changes);
 
   return serializeClient({
@@ -371,28 +434,20 @@ export const configureClientAccount = async (id, data = {}) => {
   const changes = {};
 
   if (data.cuenta_corriente_habilitada !== undefined) {
-    const value = data.cuenta_corriente_habilitada;
-
-    if (value === true || value === 1 || value === "1") {
-      changes.cuenta_corriente_habilitada = true;
-    } else if (
-      value === false ||
-      value === 0 ||
-      value === "0"
-    ) {
-      changes.cuenta_corriente_habilitada = false;
-    } else {
-      throw new ClientError(
-        "INVALID_VALUES",
-        "La habilitación de cuenta corriente debe ser verdadera o falsa"
-      );
-    }
+    changes.cuenta_corriente_habilitada = parseBooleanField(
+      data.cuenta_corriente_habilitada,
+      "La habilitación de cuenta corriente debe ser verdadera o falsa"
+    );
   }
 
   if (data.limite_credito !== undefined) {
     changes.limite_credito = parseCreditLimit(
       data.limite_credito
     );
+  }
+
+  if (data.deuda_actual !== undefined) {
+    changes.deuda_actual = parseCreditLimit(data.deuda_actual);
   }
 
   if (Object.keys(changes).length === 0) {
@@ -402,7 +457,10 @@ export const configureClientAccount = async (id, data = {}) => {
     );
   }
 
-  const deudaActual = Number(existingClient.deuda_actual ?? 0);
+  const deudaActual =
+    changes.deuda_actual !== undefined
+      ? changes.deuda_actual
+      : Number(existingClient.deuda_actual ?? 0);
   const nuevoLimite =
     changes.limite_credito ??
     Number(existingClient.limite_credito ?? 0);

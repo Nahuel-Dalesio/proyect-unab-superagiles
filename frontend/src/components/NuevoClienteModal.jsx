@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
-import { Loader2, UserPlus } from "lucide-react";
-import { crearCliente } from "@/service/cliente.service";
+import { Loader2, UserPlus, Wallet } from "lucide-react";
+import {
+  crearCliente,
+  MONTOS_CUENTA_CORRIENTE,
+} from "@/service/cliente.service";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,7 +25,11 @@ const FORM_INICIAL = {
   email: "",
   telefono: "",
   direccion: "",
+  limite_credito: 0,
 };
+
+const formatoMoneda = (valor) =>
+  `$${Number(valor || 0).toLocaleString("es-AR")}`;
 
 export function NuevoClienteModal({ open, onOpenChange, onSuccess }) {
   const [form, setForm] = useState(FORM_INICIAL);
@@ -48,6 +55,7 @@ export function NuevoClienteModal({ open, onOpenChange, onSuccess }) {
     const apellido = form.apellido.trim();
     const numero_documento = form.numero_documento.trim();
     const telefono = form.telefono.trim();
+    const limiteCredito = Number(form.limite_credito) || 0;
 
     if (!nombre) {
       showWarning("El nombre del cliente es obligatorio.");
@@ -80,6 +88,8 @@ export function NuevoClienteModal({ open, onOpenChange, onSuccess }) {
         email: form.email.trim(),
         telefono,
         direccion: form.direccion.trim(),
+        cuenta_corriente_habilitada: limiteCredito > 0,
+        limite_credito: limiteCredito,
       });
 
       onOpenChange(false);
@@ -121,7 +131,7 @@ export function NuevoClienteModal({ open, onOpenChange, onSuccess }) {
             <div>
               <DialogTitle>Nuevo Cliente</DialogTitle>
               <DialogDescription>
-                Ingresá los datos del cliente para la emisión de facturas y registros.
+                Ingresá los datos del cliente para la emisión de facturas y cuenta corriente.
               </DialogDescription>
             </div>
           </div>
@@ -235,6 +245,47 @@ export function NuevoClienteModal({ open, onOpenChange, onSuccess }) {
               value={form.direccion}
               onChange={(e) => setForm({ ...form, direccion: e.target.value })}
             />
+          </div>
+
+          {/* Selección de Cuenta Corriente con montos fijos */}
+          <div className="space-y-2 rounded-lg border border-border bg-muted/20 p-3">
+            <div className="flex items-center justify-between gap-2">
+              <Label className="text-sm font-medium flex items-center gap-1.5">
+                <Wallet className="size-4 text-accent" />
+                <span>Cuenta Corriente (Saldo para Fiado)</span>
+              </Label>
+              <span className="text-xs font-semibold text-accent">
+                {Number(form.limite_credito) > 0
+                  ? `Habilitada (${formatoMoneda(form.limite_credito)})`
+                  : "Sin cuenta corriente"}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5 pt-1">
+              <Button
+                type="button"
+                size="sm"
+                variant={Number(form.limite_credito) === 0 ? "accent" : "outline"}
+                onClick={() => setForm({ ...form, limite_credito: 0 })}
+                className="w-full max-w-none text-xs cursor-pointer"
+              >
+                Sin cuenta
+              </Button>
+              {MONTOS_CUENTA_CORRIENTE.map((monto) => (
+                <Button
+                  key={monto}
+                  type="button"
+                  size="sm"
+                  variant={
+                    Number(form.limite_credito) === monto ? "accent" : "outline"
+                  }
+                  onClick={() => setForm({ ...form, limite_credito: monto })}
+                  className="w-full max-w-none text-xs cursor-pointer"
+                >
+                  {formatoMoneda(monto)}
+                </Button>
+              ))}
+            </div>
           </div>
 
           <DialogFooter className="pt-2">

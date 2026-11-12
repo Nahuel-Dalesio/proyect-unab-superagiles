@@ -7,12 +7,20 @@ const SELECT_VENTA = `
     v.idUsuario,
     u.username,
     v.id_cliente AS idCliente,
+    c.nombre AS clienteNombre,
+    c.apellido AS clienteApellido,
+    c.tipo_documento AS clienteTipoDocumento,
+    c.numero_documento AS clienteNumeroDocumento,
+    c.email AS clienteEmail,
+    c.telefono AS clienteTelefono,
+    c.direccion AS clienteDireccion,
     v.medio_pago AS medioPago,
     v.total,
     v.estado,
     v.estado_pago AS estadoPago
   FROM ventas v
   JOIN usuario u ON u.idUsuario = v.idUsuario
+  LEFT JOIN clientes c ON c.id_cliente = v.id_cliente
 `;
 
 export const findVentaById = async (idVenta) => {
@@ -115,7 +123,7 @@ export const createVentaWithDetails = async (ventaData, detalles) => {
       total += Number(producto.precioVenta) * detalle.cantidad;
     }
     total = Math.round(total * 100) / 100;
-        let estadoPago = "pagada";
+    let estadoPago = "pagada";
 
     if (ventaData.medioPago === "cuenta_corriente") {
       if (!ventaData.idCliente) {
@@ -247,7 +255,7 @@ export const anularVentaWithDetails = async (idVenta) => {
       throw new Error("VENTA_YA_ANULADA");
     }
 
-        if (
+    if (
       venta.medioPago === "cuenta_corriente" &&
       venta.estadoPago === "pendiente" &&
       venta.idCliente

@@ -45,12 +45,11 @@ router.put(
   updateClient
 );
 
-// Solo el administrador puede habilitar la cuenta corriente
-// y establecer el límite de crédito.
+// Admin y encargado pueden habilitar la cuenta corriente y establecer el límite de crédito.
 router.patch(
   "/clientes/:id/cuenta-corriente",
   verifyToken,
-  authorizeRoles("admin"),
+  authorizeRoles("admin", "encargado"),
   configureCurrentAccount
 );
 

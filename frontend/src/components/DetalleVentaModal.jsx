@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { Ban, FileText, Loader2 } from "lucide-react";
+import { Ban, FileText, Loader2, Printer, Receipt } from "lucide-react";
 import { getVentaById, anularVenta } from "@/service/ventas.service";
 import { showConfirm, showError, showSuccess } from "@/utils/alerts";
+import { imprimirComprobante } from "@/utils/comprobante";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -38,6 +39,12 @@ const formatearFecha = (fechaIso) => {
     hour: "2-digit",
     minute: "2-digit",
   });
+};
+
+const formatearMedioPago = (medio) => {
+  if (!medio) return "—";
+  if (medio === "cuenta_corriente") return "FIADO (CTA. CTE.)";
+  return String(medio).toUpperCase();
 };
 
 export function DetalleVentaModal({
@@ -117,6 +124,10 @@ export function DetalleVentaModal({
     }
   };
 
+  const tieneCliente = Boolean(
+    venta?.idCliente || venta?.clienteNombre || venta?.clienteNumeroDocumento
+  );
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
@@ -161,7 +172,7 @@ export function DetalleVentaModal({
               <div>
                 <span className="text-muted-foreground block">Medio de pago</span>
                 <span className="font-semibold uppercase text-foreground">
-                  {venta.medioPago}
+                  {formatearMedioPago(venta.medioPago)}
                 </span>
               </div>
               <div>
@@ -170,13 +181,32 @@ export function DetalleVentaModal({
                   className={cn(
                     "inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold border mt-0.5",
                     venta.estado === "anulada"
-                      ? "bg-destructive/15 text-destructive border-destructive/30"
+                      ? "bg-red-500/10 text-red-700 dark:bg-red-500/15 dark:text-red-400 border-red-500/25"
                       : "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30"
                   )}
                 >
                   {venta.estado === "anulada" ? "Anulada" : "Completada"}
                 </span>
               </div>
+            </div>
+
+            {/* Datos del cliente / tipo de comprobante */}
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border bg-card px-3 py-2 text-xs">
+              <div>
+                <span className="text-muted-foreground">Cliente: </span>
+                {tieneCliente ? (
+                  <strong className="text-foreground">
+                    {venta.clienteNombre} {venta.clienteApellido || ""} (
+                    {venta.clienteTipoDocumento || "DNI"}:{" "}
+                    {venta.clienteNumeroDocumento})
+                  </strong>
+                ) : (
+                  <strong className="text-foreground">Consumidor Final</strong>
+                )}
+              </div>
+              <span className="inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-semibold border bg-accent/10 text-accent border-accent/25">
+                {tieneCliente ? "Comprobante: Factura C" : "Comprobante: Ticket"}
+              </span>
             </div>
 
             <div className="flex-1 min-h-0 overflow-auto rounded-lg border bg-card my-1">
@@ -225,7 +255,7 @@ export function DetalleVentaModal({
           </>
         )}
 
-        <DialogFooter className="flex items-center justify-between sm:justify-between gap-2 pt-2">
+        <DialogFooter className="flex flex-wrap items-center justify-between sm:justify-between gap-2 pt-2">
           <div>
             {esGestor && venta && venta.estado === "completada" && (
               <Button
@@ -249,13 +279,42 @@ export function DetalleVentaModal({
               </Button>
             )}
           </div>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-          >
-            Cerrar
-          </Button>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {venta && (
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => imprimirComprobante(venta, { tipo: "ticket" })}
+                  className="gap-1.5 max-w-none cursor-pointer"
+                >
+                  <Receipt className="size-4" />
+                  <span>Imprimir Ticket</span>
+                </Button>
+                {tieneCliente && (
+                  <Button
+                    type="button"
+                    variant="accent"
+                    onClick={() =>
+                      imprimirComprobante(venta, { tipo: "factura" })
+                    }
+                    className="gap-1.5 max-w-none cursor-pointer"
+                  >
+                    <Printer className="size-4" />
+                    <span>Imprimir Factura C</span>
+                  </Button>
+                )}
+              </>
+            )}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
+              Cerrar
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -263,4 +322,3 @@ export function DetalleVentaModal({
 }
 
 export default DetalleVentaModal;
-
