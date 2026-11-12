@@ -62,9 +62,9 @@ export function LoginForm({ className, ...props }) {
         <Card className="overflow-hidden relative h-auto md:h-[447px] w-full">
           <CardContent className="grid md:grid-cols-2 h-full p-0">
             {/* Lado Izquierdo: Banner de marca Kwik-E-Mart */}
-            <div className="bg-accent flex flex-col justify-center items-center gap-y-4 h-full p-8 text-center shadow-card">
-              <KwikEMartLogo className="w-48 h-auto drop-shadow-lg" />
-              <h2 className="text-lg font-semibold text-white mt-2">
+            <div className="bg-accent flex flex-col justify-center items-center gap-y-3 md:gap-y-4 h-full p-6 md:p-8 text-center shadow-card">
+              <KwikEMartLogo className="w-36 md:w-48 h-auto drop-shadow-lg" />
+              <h2 className="text-base md:text-lg font-semibold text-white mt-1 md:mt-2">
                 Sistema Integral de Gestión
               </h2>
               <p className="text-xs text-sky-100 opacity-90 max-w-xs">
@@ -74,18 +74,18 @@ export function LoginForm({ className, ...props }) {
             </div>
 
             {/* Lado Derecho: Formulario conectado al Backend */}
-            <div className="h-full flex p-6 md:p-8">
+            <div className="h-full flex justify-center p-6 md:p-8">
               <form
                 className="w-full max-w-[360px] flex flex-col gap-4"
                 onSubmit={handleSubmit}
               >
                 <div className="flex flex-col">
-                  <h1 className="text-2xl font-bold text-foreground mt-6">
+                  <h1 className="text-2xl font-bold text-foreground mt-2 md:mt-6">
                     Iniciar Sesión
                   </h1>
                 </div>
 
-                <div className="flex flex-col gap-6 mt-10">
+                <div className="flex flex-col gap-5 md:gap-6 mt-4 md:mt-10">
                   <div className="grid gap-2">
                     <Label htmlFor="username">Usuario</Label>
                     <Input
@@ -102,11 +102,11 @@ export function LoginForm({ className, ...props }) {
                   </div>
 
                   <div className="grid gap-2">
-                    <div className="flex items-center">
+                    <div className="flex flex-wrap items-center justify-between gap-1">
                       <Label htmlFor="password">Contraseña</Label>
                       <a
                         href="#"
-                        className="ml-auto text-sm text-muted-foreground underline-offset-2 hover:underline"
+                        className="text-xs sm:text-sm text-muted-foreground underline-offset-2 hover:underline"
                       >
                         ¿Olvidaste tu contraseña?
                       </a>
@@ -132,7 +132,7 @@ export function LoginForm({ className, ...props }) {
 
                 <Button
                   type="submit"
-                  className="w-full bg-accent hover:bg-accent/85 shadow-lg mt-8"
+                  className="w-full bg-accent hover:bg-accent/85 shadow-lg mt-4 md:mt-8"
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? "Ingresando..." : "Ingresar"}

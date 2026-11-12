@@ -30,23 +30,23 @@ export function CajeroTable({
         className
       )}
     >
-      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-auto">
-        <Table>
+      <div className="flex-1 min-h-0 overflow-auto">
+        <Table containerClassName="overflow-visible" className="min-w-[560px] w-full">
           <TableHeader className="sticky top-0 z-10 bg-card shadow-xs [&_th]:bg-card">
             <TableRow className="hover:bg-transparent border-b">
-              <TableHead className="px-4 py-3 font-normal text-foreground">
+              <TableHead className="px-4 py-3 font-normal text-foreground whitespace-nowrap">
                 Nombre
               </TableHead>
-              <TableHead className="px-4 py-3 font-normal text-foreground">
+              <TableHead className="px-4 py-3 font-normal text-foreground whitespace-nowrap">
                 Código de barras
               </TableHead>
-              <TableHead className="px-4 py-3 font-normal text-foreground">
+              <TableHead className="px-4 py-3 font-normal text-foreground whitespace-nowrap">
                 Precio
               </TableHead>
-              <TableHead className="px-4 py-3 text-center font-normal text-foreground">
+              <TableHead className="px-4 py-3 text-center font-normal text-foreground whitespace-nowrap">
                 Cantidad
               </TableHead>
-              <TableHead className="px-4 py-3 text-right font-normal text-foreground">
+              <TableHead className="px-4 py-3 text-right font-normal text-foreground whitespace-nowrap">
                 Subtotal
               </TableHead>
             </TableRow>
@@ -64,16 +64,16 @@ export function CajeroTable({
             ) : (
               carrito.map((item) => (
                 <TableRow key={item.idProducto}>
-                  <TableCell className="px-4 py-3 font-medium">
+                  <TableCell className="px-4 py-3 font-medium whitespace-nowrap">
                     {item.nombre}
                   </TableCell>
-                  <TableCell className="px-4 py-3 text-muted-foreground">
+                  <TableCell className="px-4 py-3 text-muted-foreground whitespace-nowrap">
                     {item.codigoBarras}
                   </TableCell>
-                  <TableCell className="px-4 py-3">
+                  <TableCell className="px-4 py-3 whitespace-nowrap">
                     {formatoPrecio(item.precioVenta)}
                   </TableCell>
-                  <TableCell className="px-4 py-3">
+                  <TableCell className="px-4 py-3 whitespace-nowrap">
                     <div className="flex items-center justify-center gap-3">
                       <Button
                         variant="outline"
@@ -100,7 +100,7 @@ export function CajeroTable({
                       </Button>
                     </div>
                   </TableCell>
-                  <TableCell className="px-4 py-3 text-right font-medium">
+                  <TableCell className="px-4 py-3 text-right font-medium whitespace-nowrap">
                     {formatoPrecio(item.precioVenta * item.cantidad)}
                   </TableCell>
                 </TableRow>

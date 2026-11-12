@@ -177,7 +177,7 @@ export function EditarProductoModal({
       >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Pencil className="size-5 text-accent" />
+            <Pencil className="size-5 text-accent shrink-0" />
             <span>Editar Producto</span>
           </DialogTitle>
           <DialogDescription>
@@ -237,7 +237,7 @@ export function EditarProductoModal({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="editPrecioCosto">Precio de costo ($) *</Label>
               <Input
@@ -273,7 +273,7 @@ export function EditarProductoModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="editStock">Stock (unidades) *</Label>
               <Input

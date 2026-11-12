@@ -130,7 +130,7 @@ export function EditarClienteModal({
       >
         <DialogHeader>
           <div className="flex items-center gap-2">
-            <div className="p-2 bg-accent/10 text-accent rounded-lg">
+            <div className="p-2 bg-accent/10 text-accent rounded-lg shrink-0">
               <UserCheck className="size-5" />
             </div>
             <div>
@@ -143,7 +143,7 @@ export function EditarClienteModal({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 py-2">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="editClienteNombre">Nombre *</Label>
               <Input
@@ -166,7 +166,7 @@ export function EditarClienteModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="editTipoDocumento">Tipo Doc. *</Label>
               <select
@@ -184,7 +184,7 @@ export function EditarClienteModal({
               </select>
             </div>
 
-            <div className="col-span-2 space-y-1.5">
+            <div className="sm:col-span-2 space-y-1.5">
               <Label htmlFor="editNumeroDocumento">Número de Documento *</Label>
               <Input
                 id="editNumeroDocumento"
@@ -204,7 +204,7 @@ export function EditarClienteModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="editClienteTelefono">Teléfono</Label>
               <Input
@@ -246,7 +246,7 @@ export function EditarClienteModal({
           </div>
 
           {/* Switch para activar / desactivar */}
-          <div className="flex items-center justify-between rounded-lg border p-3 bg-muted/20">
+          <div className="flex items-center justify-between gap-2 rounded-lg border p-3 bg-muted/20">
             <div className="space-y-0.5">
               <Label className="text-sm font-medium">Estado del cliente</Label>
               <p className="text-xs text-muted-foreground">

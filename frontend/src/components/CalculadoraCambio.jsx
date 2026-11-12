@@ -221,7 +221,7 @@ export default function CalculadoraCambio({
       <DialogContent
         onPointerDownOutside={(e) => e.preventDefault()}
         onInteractOutside={(e) => e.preventDefault()}
-        className="max-w-[600px] w-full max-h-[90vh] overflow-y-auto p-6 flex flex-col gap-3"
+        className="sm:max-w-[600px] max-h-[90dvh] overflow-y-auto p-4 sm:p-6 flex flex-col gap-3"
       >
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold">Calculadora Cambio</DialogTitle>
@@ -239,7 +239,7 @@ export default function CalculadoraCambio({
 
           <div>
             <Label className="mb-1 block">Medio de pago</Label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
               {MEDIOS_PAGO.map(({ id, label, icon: Icon }) => {
                 const seleccionado = medioPago === id;
                 return (
@@ -249,10 +249,10 @@ export default function CalculadoraCambio({
                     variant={seleccionado ? "accent" : "outline"}
                     onClick={() => handleSeleccionarMedioPago(id)}
                     disabled={procesando}
-                    className="h-10 w-full max-w-none flex items-center justify-center gap-2 cursor-pointer"
+                    className="h-10 w-full max-w-none flex items-center justify-center gap-1.5 sm:gap-2 px-2 text-xs sm:text-sm cursor-pointer"
                   >
-                    <Icon className="size-4" />
-                    <span>{label}</span>
+                    <Icon className="size-4 shrink-0" />
+                    <span className="truncate">{label}</span>
                   </Button>
                 );
               })}
@@ -315,14 +315,14 @@ export default function CalculadoraCambio({
             </div>
           </div>
 
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
             {BILLETES.map((valor) => (
               <Button
                 key={valor}
                 type="button"
                 variant="accent"
                 disabled={!esEfectivo || procesando}
-                className="h-10 w-full"
+                className="h-10 w-full px-1 text-xs sm:text-sm"
                 onClick={() => handleSumarBillete(valor)}
               >
                 {valor}
