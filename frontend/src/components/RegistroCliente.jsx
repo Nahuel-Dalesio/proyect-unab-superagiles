@@ -140,10 +140,10 @@ export default function RegistroCliente({ value, onChange, disabled = false }) {
                       }}
                       className="flex w-full items-center justify-between px-3 py-2 text-left text-xs hover:bg-muted/60 border-b border-border/50 last:border-b-0 cursor-pointer"
                     >
-                      <span className="font-medium text-foreground">
+                      <span className="font-medium text-foreground truncate mr-2">
                         {c.nombre} {c.apellido || ""}
                       </span>
-                      <span className="font-mono text-muted-foreground">
+                      <span className="font-mono text-muted-foreground shrink-0">
                         {c.tipo_documento}: {c.numero_documento}
                       </span>
                     </button>
@@ -180,7 +180,7 @@ export default function RegistroCliente({ value, onChange, disabled = false }) {
 
       {registrarNuevo && (
         <div className="flex flex-col gap-3 pt-1">
-          <div className="flex justify-between gap-2">
+          <div className="flex flex-col sm:flex-row justify-between gap-2">
             <div className="w-full">
               <Label className="mb-1 block text-xs">Nombre *</Label>
               <Input
@@ -202,7 +202,7 @@ export default function RegistroCliente({ value, onChange, disabled = false }) {
           </div>
 
           <div className="flex gap-2 items-end">
-            <div className="w-28 shrink-0">
+            <div className="w-24 sm:w-28 shrink-0">
               <Label className="mb-1 block text-xs">Tipo Doc. *</Label>
               <select
                 disabled={disabled}
@@ -237,7 +237,7 @@ export default function RegistroCliente({ value, onChange, disabled = false }) {
             </div>
           </div>
 
-          <div className="flex justify-between gap-2">
+          <div className="flex flex-col sm:flex-row justify-between gap-2">
             <div className="w-full">
               <Label className="mb-1 block text-xs">Teléfono</Label>
               <Input

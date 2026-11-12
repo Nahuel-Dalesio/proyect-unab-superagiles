@@ -103,7 +103,7 @@ export function EditarUsuarioModal({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <div className="flex items-center gap-2">
-            <div className="p-2 bg-accent/10 text-accent rounded-lg">
+            <div className="p-2 bg-accent/10 text-accent rounded-lg shrink-0">
               <UserCheck className="size-5" />
             </div>
             <div>
@@ -116,7 +116,7 @@ export function EditarUsuarioModal({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 py-2">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="editUsername">Usuario *</Label>
               <Input
@@ -164,7 +164,7 @@ export function EditarUsuarioModal({
           </div>
 
           {/* Switch para activar / desactivar */}
-          <div className="flex items-center justify-between rounded-lg border p-3 bg-muted/20">
+          <div className="flex items-center justify-between gap-2 rounded-lg border p-3 bg-muted/20">
             <div className="space-y-0.5">
               <Label className="text-sm font-medium">Estado del usuario</Label>
               <p className="text-xs text-muted-foreground">

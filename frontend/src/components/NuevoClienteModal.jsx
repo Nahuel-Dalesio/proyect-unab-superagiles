@@ -115,7 +115,7 @@ export function NuevoClienteModal({ open, onOpenChange, onSuccess }) {
       >
         <DialogHeader>
           <div className="flex items-center gap-2">
-            <div className="p-2 bg-accent/10 text-accent rounded-lg">
+            <div className="p-2 bg-accent/10 text-accent rounded-lg shrink-0">
               <UserPlus className="size-5" />
             </div>
             <div>
@@ -128,7 +128,7 @@ export function NuevoClienteModal({ open, onOpenChange, onSuccess }) {
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 py-2">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="nuevoClienteNombre">Nombre *</Label>
               <Input
@@ -154,7 +154,7 @@ export function NuevoClienteModal({ open, onOpenChange, onSuccess }) {
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="tipoDocumento">Tipo Doc. *</Label>
               <select
@@ -172,7 +172,7 @@ export function NuevoClienteModal({ open, onOpenChange, onSuccess }) {
               </select>
             </div>
 
-            <div className="col-span-2 space-y-1.5">
+            <div className="sm:col-span-2 space-y-1.5">
               <Label htmlFor="numeroDocumento">Número de Documento *</Label>
               <Input
                 id="numeroDocumento"
@@ -193,7 +193,7 @@ export function NuevoClienteModal({ open, onOpenChange, onSuccess }) {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="nuevoClienteTelefono">Teléfono</Label>
               <Input

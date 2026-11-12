@@ -97,7 +97,7 @@ export function NuevoUsuarioModal({ open, onOpenChange, onSuccess }) {
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <div className="flex items-center gap-2">
-            <div className="p-2 bg-accent/10 text-accent rounded-lg">
+            <div className="p-2 bg-accent/10 text-accent rounded-lg shrink-0">
               <UserPlus className="size-5" />
             </div>
             <div>
@@ -110,7 +110,7 @@ export function NuevoUsuarioModal({ open, onOpenChange, onSuccess }) {
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 py-2">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="nuevoUsername">Usuario *</Label>
               <Input
@@ -142,7 +142,7 @@ export function NuevoUsuarioModal({ open, onOpenChange, onSuccess }) {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="nuevoPassword">Contraseña *</Label>
               <Input
@@ -173,7 +173,7 @@ export function NuevoUsuarioModal({ open, onOpenChange, onSuccess }) {
           </div>
 
           {/* Switch para estado inicial */}
-          <div className="flex items-center justify-between rounded-lg border p-3 bg-muted/20">
+          <div className="flex items-center justify-between gap-2 rounded-lg border p-3 bg-muted/20">
             <div className="space-y-0.5">
               <Label className="text-sm font-medium">Usuario activo</Label>
               <p className="text-xs text-muted-foreground">

@@ -208,36 +208,38 @@ export default function Productos() {
   return (
     <div className="flex flex-1 flex-col w-full min-h-0 overflow-hidden">
       {/* Encabezado con título y botones de gestión */}
-      <div className="mb-6 flex shrink-0 items-center justify-between gap-4">
-        <div className="flex flex-row items-center">
+      <div className="mb-4 sm:mb-6 flex shrink-0 flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex flex-row items-center min-w-0">
           <Package
             strokeWidth={1.5}
             className="size-12 p-2 border border-border rounded-lg bg-card shrink-0"
           />
-          <div className="px-3">
+          <div className="px-3 min-w-0">
             <div className="text-lg font-semibold">Inventario</div>
-            <div className="text-sm text-muted-foreground">Lista de productos en stock</div>
+            <div className="text-sm text-muted-foreground truncate">
+              Lista de productos en stock
+            </div>
           </div>
         </div>
 
         {esGestor && (
-          <div className="flex items-center gap-2">
+          <div className="grid grid-cols-2 sm:flex items-center gap-2 w-full sm:w-auto">
             <Button
               variant="outline"
               type="button"
               onClick={() => setModalPreciosAbierto(true)}
-              className="w-56 h-10 px-4 gap-2 font-medium max-w-none cursor-pointer"
+              className="w-full sm:w-56 h-10 px-3 sm:px-4 gap-2 text-xs sm:text-sm font-medium max-w-none cursor-pointer"
             >
-              <TrendingUp className="size-4 text-accent" />
-              <span>Actualizar Precios (%)</span>
+              <TrendingUp className="size-4 text-accent shrink-0" />
+              <span className="truncate">Actualizar Precios (%)</span>
             </Button>
             <Button
               variant="accent"
               onClick={abrirModal}
-              className="w-56 h-10 px-4 gap-2 font-medium max-w-none cursor-pointer"
+              className="w-full sm:w-56 h-10 px-3 sm:px-4 gap-2 text-xs sm:text-sm font-medium max-w-none cursor-pointer"
             >
-              <Plus className="size-4" />
-              <span>Nuevo Producto</span>
+              <Plus className="size-4 shrink-0" />
+              <span className="truncate">Nuevo Producto</span>
             </Button>
           </div>
         )}
@@ -246,7 +248,7 @@ export default function Productos() {
       {/* Barra de búsqueda y acciones de stock */}
       <form
         onSubmit={(e) => e.preventDefault()}
-        className="mb-4 shrink-0 flex items-center justify-between gap-3"
+        className="mb-4 shrink-0 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3"
       >
         <input
           ref={inputRef}
@@ -255,19 +257,19 @@ export default function Productos() {
           value={codigo}
           onChange={(e) => setCodigo(e.target.value)}
           placeholder="Buscar producto por nombre o código..."
-          className="w-1/4 min-w-64 rounded-md border border-border bg-input px-4 py-2.5 text-sm outline-none"
+          className="w-full sm:w-1/3 lg:w-1/4 sm:min-w-64 rounded-md border border-border bg-input px-4 py-2.5 text-sm outline-none"
         />
 
         {esGestor && (
-          <div className="flex items-center gap-2">
+          <div className="grid grid-cols-2 sm:flex items-center gap-2 w-full sm:w-auto">
             <Button
               type="button"
               variant={soloStockBajo ? "accent" : "outline"}
               onClick={handleToggleFiltroStockBajo}
-              className="w-56 h-10 px-4 gap-2 font-medium max-w-none cursor-pointer"
+              className="w-full sm:w-56 h-10 px-3 sm:px-4 gap-2 text-xs sm:text-sm font-medium max-w-none cursor-pointer"
             >
-              <AlertTriangle className="size-4" />
-              <span>
+              <AlertTriangle className="size-4 shrink-0" />
+              <span className="truncate">
                 {soloStockBajo ? "Mostrando solo stock bajo" : "Filtrar stock bajo"}
               </span>
             </Button>
@@ -276,9 +278,9 @@ export default function Productos() {
               variant="accent"
               type="button"
               onClick={() => setModalStockBajoAbierto(true)}
-              className="w-56 h-10 px-4 gap-2 font-medium max-w-none cursor-pointer"
+              className="w-full sm:w-56 h-10 px-3 sm:px-4 gap-2 text-xs sm:text-sm font-medium max-w-none cursor-pointer"
             >
-              <span>Reponer Stock</span>
+              <span className="truncate">Reponer Stock</span>
             </Button>
           </div>
         )}
@@ -352,7 +354,7 @@ export default function Productos() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label htmlFor="precioCosto">Precio de costo ($) *</Label>
                 <Input
@@ -384,7 +386,7 @@ export default function Productos() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label htmlFor="stock">Stock inicial *</Label>
                 <Input

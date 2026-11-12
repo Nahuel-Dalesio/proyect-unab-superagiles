@@ -310,22 +310,23 @@ export default function Caja() {
 
   return (
     <div className="flex flex-1 flex-col w-full min-h-0 overflow-hidden">
-      <div className="mb-6 flex shrink-0 items-start justify-between gap-4 max-h-12">
-        <div className=" flex flex-row h-full w-full">
+      <div className="mb-4 sm:mb-6 flex shrink-0 flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex flex-row items-center min-w-0">
           <User
             strokeWidth={1.5}
             className="size-12 p-2 border border-border rounded-lg bg-card shrink-0"
           />
-          <div className="px-2">
-              <div className="text-lg font-semibold">Caja</div>
-              <div className="text-muted-foreground">
-                {caja
-                  ? `Abierta por ${caja.username}`
-                  : "Lista productos agregados"}
-              </div>
+          <div className="px-3 min-w-0">
+            <div className="text-lg font-semibold">Caja</div>
+            <div className="text-sm text-muted-foreground truncate">
+              {caja
+                ? `Abierta por ${caja.username}`
+                : "Lista productos agregados"}
+            </div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+
+        <div className="flex items-center gap-2 w-full sm:w-auto">
           {caja ? (
             <Button
               variant="destructive"
@@ -337,7 +338,7 @@ export default function Caja() {
                   ? "Cerrar la caja actual"
                   : `Solo ${caja.username} puede cerrar esta caja`
               }
-              className="h-full"
+              className="h-10 flex-1 sm:flex-initial max-w-none cursor-pointer"
             >
               Cerrar Caja
             </Button>
@@ -347,7 +348,7 @@ export default function Caja() {
               type="button"
               onClick={() => setModalAbrirOpen(true)}
               disabled={cargandoCaja}
-              className="h-full"
+              className="h-10 flex-1 sm:flex-initial max-w-none cursor-pointer"
             >
               Abrir Caja
             </Button>
@@ -356,7 +357,7 @@ export default function Caja() {
             variant="accent"
             type="button"
             onClick={limpiarCaja}
-            className="h-full"
+            className="h-10 flex-1 sm:flex-initial max-w-none cursor-pointer"
           >
             Limpiar Caja
           </Button>
@@ -364,21 +365,26 @@ export default function Caja() {
       </div>
 
       {!cargandoCaja && !caja && (
-        <div className="mb-4 flex shrink-0 items-center gap-2 rounded-md border border-amber-500/50 bg-amber-500/10 px-4 py-2.5 text-sm text-amber-700">
+        <div className="mb-4 flex shrink-0 items-center gap-2 rounded-md border border-amber-500/50 bg-amber-500/10 px-4 py-2.5 text-sm text-amber-700 dark:text-amber-400">
           <TriangleAlert className="size-4 shrink-0" />
-          No hay una caja abierta. Abrí la caja para comenzar a vender.
+          <span>No hay una caja abierta. Abrí la caja para comenzar a vender.</span>
         </div>
       )}
 
       {caja && !esPropietario && (
         <div className="mb-4 flex shrink-0 items-center gap-2 rounded-md border border-border bg-muted/40 px-4 py-2.5 text-sm text-muted-foreground">
           <TriangleAlert className="size-4 shrink-0" />
-          La caja fue abierta por {caja.username}. Solo esa persona puede
-          cerrarla.
+          <span>
+            La caja fue abierta por {caja.username}. Solo esa persona puede
+            cerrarla.
+          </span>
         </div>
       )}
 
-      <div ref={buscadorWrapperRef} className="relative mb-4 shrink-0 w-1/3 min-w-80">
+      <div
+        ref={buscadorWrapperRef}
+        className="relative mb-4 shrink-0 w-full sm:w-1/2 lg:w-1/3 sm:min-w-80"
+      >
         <form onSubmit={handleEscaneo}>
           <input
             ref={inputRef}
@@ -432,17 +438,19 @@ export default function Caja() {
         formatoPrecio={formatoPrecio}
       />
 
-      <div className="mt-4 shrink-0 flex gap-4">
-        <div className="flex flex-1 items-center justify-between rounded-md border bg-card px-4 max-h-10 h-full">
+      <div className="mt-3 sm:mt-4 shrink-0 flex flex-col sm:flex-row gap-2 sm:gap-4">
+        <div className="flex flex-1 items-center justify-between rounded-md border bg-card px-4 h-10 py-2">
           <span className="text-sm">Total a Pagar</span>
-          <span className="text-2xl font-semibold">{formatoPrecio(total)}</span>
+          <span className="text-xl sm:text-2xl font-semibold">
+            {formatoPrecio(total)}
+          </span>
         </div>
         <Button
           variant="accent"
           type="button"
           onClick={abrirCalculadora}
           disabled={!caja}
-          className="rounded-md bg-accent px-5 text-sm font-medium text-white hover:accent/85 h-10"
+          className="rounded-md bg-accent px-5 text-sm font-medium text-white hover:accent/85 h-10 w-full sm:w-auto max-w-none cursor-pointer"
         >
           Calcular Cambio
         </Button>

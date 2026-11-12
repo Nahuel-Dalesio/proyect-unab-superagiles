@@ -248,27 +248,27 @@ export function UsuariosTable({
       </div>
 
       {/* Pie de paginación */}
-      <div className="flex shrink-0 items-center justify-between border-t bg-card px-4 py-2.5 text-xs text-muted-foreground">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-t bg-card px-3 sm:px-4 py-2.5 text-xs text-muted-foreground">
         <span>
           {usuariosOrdenados.length === 0
             ? "Sin usuarios para mostrar"
             : `Mostrando ${indiceInicio + 1}–${indiceFin} de ${usuariosOrdenados.length} usuarios`}
         </span>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           <Button
             type="button"
             variant="outline"
             size="sm"
             onClick={() => setPaginaActual((p) => Math.max(1, p - 1))}
             disabled={paginaSegura <= 1}
-            className="h-7 px-2.5 gap-1 cursor-pointer"
+            className="h-7 px-2 sm:px-2.5 gap-1 cursor-pointer"
           >
             <ChevronLeft className="size-3.5" />
             <span>Anterior</span>
           </Button>
 
-          <span className="px-2 font-medium text-foreground">
+          <span className="px-1 sm:px-2 font-medium text-foreground">
             Página {paginaSegura} de {totalPaginas}
           </span>
 
@@ -278,7 +278,7 @@ export function UsuariosTable({
             size="sm"
             onClick={() => setPaginaActual((p) => Math.min(totalPaginas, p + 1))}
             disabled={paginaSegura >= totalPaginas}
-            className="h-7 px-2.5 gap-1 cursor-pointer"
+            className="h-7 px-2 sm:px-2.5 gap-1 cursor-pointer"
           >
             <span>Siguiente</span>
             <ChevronRight className="size-3.5" />

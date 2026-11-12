@@ -1,6 +1,6 @@
 import { useContext, useState } from "react";
 import { Outlet } from "react-router-dom";
-import { CircleUser, Moon, Sun } from "lucide-react";
+import { CircleUser, Moon, ShoppingCart, Sun } from "lucide-react";
 import { AuthContext } from "@/context/AuthContext";
 import AppSidebar from "@/components/AppSidebar";
 import { Button } from "@/components/ui/button";
@@ -39,11 +39,11 @@ export default function MainLayout() {
     <TooltipProvider>
       <SidebarProvider className="h-svh overflow-hidden">
         <AppSidebar />
-        <SidebarInset className="h-svh overflow-hidden">
-          <header className="flex h-14 shrink-0 items-center justify-between border-b bg-card px-4">
+        <SidebarInset className="h-svh min-w-0 overflow-hidden">
+          <header className="flex h-14 shrink-0 items-center justify-between border-b bg-card px-3 sm:px-4">
             <SidebarTrigger />
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <Button
                 variant="ghost"
                 size="icon"
@@ -54,7 +54,7 @@ export default function MainLayout() {
                 title={
                   modoOscuro ? "Cambiar a modo claro" : "Cambiar a modo oscuro"
                 }
-                className="cursor-pointer border border-border"
+                className="cursor-pointer"
               >
                 {modoOscuro ? (
                   <Sun className="size-4" />
@@ -63,14 +63,18 @@ export default function MainLayout() {
                 )}
               </Button>
 
-              <div className="flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm">
-                <span>{user?.username}</span>
-                <CircleUser className="size-4" />
+              <div className="flex items-center gap-2 rounded-md border px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm max-w-[150px] sm:max-w-none">
+                <span className="truncate">{user?.username}</span>
+                <CircleUser className="size-4 shrink-0" />
               </div>
+
+              <Button variant="ghost" size="icon" aria-label="Carrito">
+                <ShoppingCart />
+              </Button>
             </div>
           </header>
 
-          <div className="flex flex-1 flex-col min-h-0 overflow-hidden bg-muted/40 p-6">
+          <div className="flex flex-1 flex-col min-h-0 min-w-0 overflow-hidden bg-muted/40 p-3 sm:p-6">
             <Outlet />
           </div>
         </SidebarInset>

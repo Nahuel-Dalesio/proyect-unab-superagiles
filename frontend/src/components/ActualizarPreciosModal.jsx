@@ -88,7 +88,7 @@ export function ActualizarPreciosModal({ open, onOpenChange, onSuccess }) {
       >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <TrendingUp className="size-5 text-accent" />
+            <TrendingUp className="size-5 text-accent shrink-0" />
             <span>Actualizar Precios por Porcentaje</span>
           </DialogTitle>
           <DialogDescription>
@@ -123,7 +123,7 @@ export function ActualizarPreciosModal({ open, onOpenChange, onSuccess }) {
             <span className="text-xs text-muted-foreground">
                incrementos rápidos:
             </span>
-            <div className="grid grid-cols-6 gap-1.5">
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
               {PORCENTAJES_RAPIDOS.map((valor) => (
                 <Button
                   key={valor}
@@ -193,4 +193,3 @@ export function ActualizarPreciosModal({ open, onOpenChange, onSuccess }) {
 }
 
 export default ActualizarPreciosModal;
-

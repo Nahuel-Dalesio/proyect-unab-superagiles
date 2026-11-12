@@ -24,6 +24,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 
 // Para sumar una opción: agregar un objeto acá. Los roles filtran qué ve cada usuario.
@@ -74,6 +75,7 @@ const ACTIVO =
 export default function AppSidebar() {
   const { user, logout } = useContext(AuthContext);
   const { pathname } = useLocation();
+  const { isMobile, setOpenMobile } = useSidebar();
   const [cajaAbierta, setCajaAbierta] = useState(null);
   const [modalCerrarCajaOpen, setModalCerrarCajaOpen] = useState(false);
   const [verificandoCaja, setVerificandoCaja] = useState(false);
@@ -82,8 +84,17 @@ export default function AppSidebar() {
     item.roles.includes(user?.rol)
   );
 
+  const handleNavegar = () => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
+
   const handleIntentarLogout = async () => {
     if (verificandoCaja) return;
+    if (isMobile) {
+      setOpenMobile(false);
+    }
     setVerificandoCaja(true);
 
     try {
@@ -133,7 +144,7 @@ export default function AppSidebar() {
                       isActive={pathname.startsWith(path)}
                       className={ACTIVO}
                     >
-                      <Link to={path}>
+                      <Link to={path} onClick={handleNavegar}>
                         <Icon />
                         <span className="group-data-[collapsible=icon]:hidden">
                           {label}
