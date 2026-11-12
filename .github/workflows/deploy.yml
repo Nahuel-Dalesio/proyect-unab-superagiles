@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: Frontend   # <- ajustar si hace falta
+        working-directory: frontend   # <- ajustar si hace falta
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
