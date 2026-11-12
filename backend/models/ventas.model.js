@@ -9,7 +9,8 @@ const SELECT_VENTA = `
     v.id_cliente AS idCliente,
     v.medio_pago AS medioPago,
     v.total,
-    v.estado
+    v.estado,
+    v.estado_pago AS estadoPago
   FROM ventas v
   JOIN usuario u ON u.idUsuario = v.idUsuario
 `;
@@ -114,15 +115,68 @@ export const createVentaWithDetails = async (ventaData, detalles) => {
       total += Number(producto.precioVenta) * detalle.cantidad;
     }
     total = Math.round(total * 100) / 100;
+        let estadoPago = "pagada";
+
+    if (ventaData.medioPago === "cuenta_corriente") {
+      if (!ventaData.idCliente) {
+        throw new Error("CLIENTE_REQUERIDO");
+      }
+
+      const [clientes] = await connection.query(
+        `SELECT
+          activo,
+          cuenta_corriente_habilitada AS cuentaCorrienteHabilitada,
+          limite_credito AS limiteCredito,
+          deuda_actual AS deudaActual
+         FROM clientes
+         WHERE id_cliente = ?
+         FOR UPDATE`,
+        [ventaData.idCliente]
+      );
+
+      if (clientes.length === 0) {
+        throw new Error("CLIENTE_NO_ENCONTRADO");
+      }
+
+      const cliente = clientes[0];
+
+      if (!cliente.activo) {
+        throw new Error("CLIENTE_INACTIVO");
+      }
+
+      if (!cliente.cuentaCorrienteHabilitada) {
+        throw new Error("CUENTA_CORRIENTE_NO_HABILITADA");
+      }
+
+      const nuevaDeuda =
+        Math.round(
+          (Number(cliente.deudaActual) + total) * 100
+        ) / 100;
+
+      if (nuevaDeuda > Number(cliente.limiteCredito)) {
+        throw new Error("LIMITE_CREDITO_SUPERADO");
+      }
+
+      await connection.query(
+        `UPDATE clientes
+         SET deuda_actual = ?
+         WHERE id_cliente = ?`,
+        [nuevaDeuda, ventaData.idCliente]
+      );
+
+      estadoPago = "pendiente";
+    }
 
     const [ventaResult] = await connection.query(
-      `INSERT INTO ventas (idUsuario, id_cliente, medio_pago, total, estado)
-       VALUES (?, ?, ?, ?, 'completada')`,
+      `INSERT INTO ventas
+        (idUsuario, id_cliente, medio_pago, total, estado, estado_pago)
+       VALUES (?, ?, ?, ?, 'completada', ?)`,
       [
         ventaData.idUsuario,
         ventaData.idCliente ?? null,
         ventaData.medioPago,
         total,
+        estadoPago,
       ]
     );
 
@@ -170,7 +224,16 @@ export const anularVentaWithDetails = async (idVenta) => {
     await connection.beginTransaction();
 
     const [ventas] = await connection.query(
-      `SELECT id_venta AS idVenta, estado FROM ventas WHERE id_venta = ? FOR UPDATE`,
+      `SELECT
+        id_venta AS idVenta,
+        id_cliente AS idCliente,
+        medio_pago AS medioPago,
+        total,
+        estado,
+        estado_pago AS estadoPago
+       FROM ventas
+       WHERE id_venta = ?
+       FOR UPDATE`,
       [idVenta]
     );
 
@@ -178,8 +241,44 @@ export const anularVentaWithDetails = async (idVenta) => {
       throw new Error("VENTA_NO_ENCONTRADA");
     }
 
-    if (ventas[0].estado === "anulada") {
+    const venta = ventas[0];
+
+    if (venta.estado === "anulada") {
       throw new Error("VENTA_YA_ANULADA");
+    }
+
+        if (
+      venta.medioPago === "cuenta_corriente" &&
+      venta.estadoPago === "pendiente" &&
+      venta.idCliente
+    ) {
+      const [clientes] = await connection.query(
+        `SELECT deuda_actual AS deudaActual
+         FROM clientes
+         WHERE id_cliente = ?
+         FOR UPDATE`,
+        [venta.idCliente]
+      );
+
+      if (clientes.length === 0) {
+        throw new Error("CLIENTE_NO_ENCONTRADO");
+      }
+
+      const nuevaDeuda = Math.max(
+        0,
+        Math.round(
+          (Number(clientes[0].deudaActual) -
+            Number(venta.total)) *
+            100
+        ) / 100
+      );
+
+      await connection.query(
+        `UPDATE clientes
+         SET deuda_actual = ?
+         WHERE id_cliente = ?`,
+        [nuevaDeuda, venta.idCliente]
+      );
     }
 
     const [detalles] = await connection.query(
@@ -198,7 +297,10 @@ export const anularVentaWithDetails = async (idVenta) => {
     }
 
     await connection.query(
-      `UPDATE ventas SET estado = 'anulada' WHERE id_venta = ?`,
+      `UPDATE ventas
+ SET estado = 'anulada',
+     estado_pago = 'cancelada'
+ WHERE id_venta = ?`,
       [idVenta]
     );
 

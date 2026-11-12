@@ -17,7 +17,14 @@ export class VentaError extends Error {
 // Límites según esquema
 const MAX_PRECIO = 99999999.99;
 const MAX_CANTIDAD = 2147483647;
-const MEDIOS_PAGO_VALIDOS = ["efectivo", "debito", "credito", "transferencia", "qr"];
+const MEDIOS_PAGO_VALIDOS = [
+  "efectivo",
+  "debito",
+  "credito",
+  "transferencia",
+  "qr",
+  "cuenta_corriente",
+];
 
 const parseNumber = (value) => {
   if (typeof value === "number") return value;
@@ -63,7 +70,25 @@ export const registrarVenta = async (idUsuario, data) => {
   if (!MEDIOS_PAGO_VALIDOS.includes(medioPago)) {
     throw new VentaError(
       "INVALID_VALUES",
-      "El medio de pago debe ser uno de: efectivo, debito, credito, transferencia, qr"
+      "El medio de pago debe ser uno de: efectivo, debito, credito, transferencia, qr, cuenta_corriente"
+    );
+  }
+
+    const idClienteNormalizado =
+    idCliente === undefined ||
+    idCliente === null ||
+    idCliente === ""
+      ? null
+      : parseNumber(idCliente);
+
+  if (
+    medioPago === "cuenta_corriente" &&
+    (!Number.isInteger(idClienteNormalizado) ||
+      idClienteNormalizado <= 0)
+  ) {
+    throw new VentaError(
+      "CLIENT_REQUIRED",
+      "Debe seleccionar un cliente válido para pagar a cuenta corriente"
     );
   }
 
@@ -98,7 +123,7 @@ export const registrarVenta = async (idUsuario, data) => {
     idVenta = await createVentaWithDetails(
       {
         idUsuario,
-        idCliente: idCliente ?? null,
+        idCliente: idClienteNormalizado,
         medioPago,
         total,
       },
@@ -115,6 +140,41 @@ export const registrarVenta = async (idUsuario, data) => {
 
     if (error.message === "STOCK_INSUFICIENTE") {
       throw new VentaError("STOCK_INSUFICIENTE", "Stock insuficiente para completar la venta");
+    }
+
+        if (error.message === "CLIENTE_REQUERIDO") {
+      throw new VentaError(
+        "CLIENT_REQUIRED",
+        "Debe seleccionar un cliente para pagar a cuenta corriente"
+      );
+    }
+
+    if (error.message === "CLIENTE_NO_ENCONTRADO") {
+      throw new VentaError(
+        "CLIENT_NOT_FOUND",
+        "El cliente seleccionado no existe"
+      );
+    }
+
+    if (error.message === "CLIENTE_INACTIVO") {
+      throw new VentaError(
+        "CLIENT_INACTIVE",
+        "El cliente seleccionado se encuentra inactivo"
+      );
+    }
+
+    if (error.message === "CUENTA_CORRIENTE_NO_HABILITADA") {
+      throw new VentaError(
+        "CURRENT_ACCOUNT_DISABLED",
+        "El cliente no tiene habilitada la cuenta corriente"
+      );
+    }
+
+    if (error.message === "LIMITE_CREDITO_SUPERADO") {
+      throw new VentaError(
+        "CREDIT_LIMIT_EXCEEDED",
+        "La venta supera el crédito disponible del cliente"
+      );
     }
 
     throw error;

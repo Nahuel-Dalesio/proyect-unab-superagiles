@@ -22,6 +22,7 @@ const MAX_DOCUMENTO = 20;
 const MAX_EMAIL = 100;
 const MAX_TELEFONO = 30;
 const MAX_DIRECCION = 255;
+const MAX_CREDITO = 99999999.99;
 
 const parseClientId = (value) => {
   const id = Number(value);
@@ -47,6 +48,24 @@ const parseActive = (value) => {
     "INVALID_VALUES",
     "El estado activo debe ser verdadero o falso"
   );
+};
+
+const parseCreditLimit = (value) => {
+  const limit = Number(value);
+
+  if (
+    !Number.isFinite(limit) ||
+    limit < 0 ||
+    limit > MAX_CREDITO ||
+    Number(limit.toFixed(2)) !== limit
+  ) {
+    throw new ClientError(
+      "INVALID_VALUES",
+      "El límite de crédito debe ser un número no negativo con hasta 2 decimales"
+    );
+  }
+
+  return limit;
 };
 
 const isValidEmail = (email) =>
@@ -106,10 +125,23 @@ const validateLengths = ({
   }
 };
 
-const serializeClient = (client) => ({
-  ...client,
-  activo: Boolean(client.activo),
-});
+const serializeClient = (client) => {
+  const limiteCredito = Number(client.limite_credito ?? 0);
+  const deudaActual = Number(client.deuda_actual ?? 0);
+
+  return {
+    ...client,
+    activo: Boolean(client.activo),
+    cuenta_corriente_habilitada: Boolean(
+      client.cuenta_corriente_habilitada
+    ),
+    limite_credito: limiteCredito,
+    deuda_actual: deudaActual,
+    credito_disponible: Math.round(
+      (limiteCredito - deudaActual) * 100
+    ) / 100,
+  };
+};
 
 export const searchClients = async (search) => {
   const normalizedSearch = String(search ?? "").trim();
@@ -315,6 +347,71 @@ export const updateClient = async (id, data = {}) => {
         "Ya existe un cliente con ese número de documento"
       );
     }
+  }
+
+  await updateClientById(idCliente, changes);
+
+  return serializeClient({
+    ...existingClient,
+    ...changes,
+  });
+};
+
+export const configureClientAccount = async (id, data = {}) => {
+  const idCliente = parseClientId(id);
+  const existingClient = await findClientById(idCliente);
+
+  if (!existingClient) {
+    throw new ClientError(
+      "CLIENT_NOT_FOUND",
+      "Cliente no encontrado"
+    );
+  }
+
+  const changes = {};
+
+  if (data.cuenta_corriente_habilitada !== undefined) {
+    const value = data.cuenta_corriente_habilitada;
+
+    if (value === true || value === 1 || value === "1") {
+      changes.cuenta_corriente_habilitada = true;
+    } else if (
+      value === false ||
+      value === 0 ||
+      value === "0"
+    ) {
+      changes.cuenta_corriente_habilitada = false;
+    } else {
+      throw new ClientError(
+        "INVALID_VALUES",
+        "La habilitación de cuenta corriente debe ser verdadera o falsa"
+      );
+    }
+  }
+
+  if (data.limite_credito !== undefined) {
+    changes.limite_credito = parseCreditLimit(
+      data.limite_credito
+    );
+  }
+
+  if (Object.keys(changes).length === 0) {
+    throw new ClientError(
+      "MISSING_FIELDS",
+      "Debe indicar si habilita la cuenta corriente o definir un límite de crédito"
+    );
+  }
+
+  const deudaActual = Number(existingClient.deuda_actual ?? 0);
+  const nuevoLimite =
+    changes.limite_credito ??
+    Number(existingClient.limite_credito ?? 0);
+
+  if (nuevoLimite < deudaActual) {
+    throw new ClientError(
+      "INVALID_VALUES",
+      "El límite de crédito no puede ser menor que la deuda actual"
+    );
   }
 
   await updateClientById(idCliente, changes);

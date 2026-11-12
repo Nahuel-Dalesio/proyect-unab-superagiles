@@ -9,6 +9,9 @@ const CLIENT_FIELDS = `
   email,
   telefono,
   direccion,
+  cuenta_corriente_habilitada,
+  limite_credito,
+  deuda_actual,
   activo
 `;
 
@@ -93,6 +96,8 @@ const UPDATABLE_COLUMNS = {
   email: "email",
   telefono: "telefono",
   direccion: "direccion",
+  cuenta_corriente_habilitada: "cuenta_corriente_habilitada",
+  limite_credito: "limite_credito",
   activo: "activo",
 };
 
