@@ -1,5 +1,6 @@
 import React from "react";
-import { Ban, EllipsisVertical, Eye, Loader2 } from "lucide-react";
+import { Ban, EllipsisVertical, Eye, Loader2, Printer } from "lucide-react";
+import { imprimirComprobante } from "@/utils/comprobante";
 import {
   Table,
   TableBody,
@@ -34,6 +35,12 @@ const formatearFecha = (fechaIso) => {
     hour: "2-digit",
     minute: "2-digit",
   });
+};
+
+const formatearMedioPago = (medio) => {
+  if (!medio) return "—";
+  if (medio === "cuenta_corriente") return "FIADO (CTA. CTE.)";
+  return String(medio).toUpperCase();
 };
 
 export function VentasTable({
@@ -135,7 +142,7 @@ export function VentasTable({
 
                     <TableCell className="px-4 py-3 whitespace-nowrap">
                       <span className="inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium uppercase border bg-muted/40 text-foreground">
-                        {venta.medioPago}
+                        {formatearMedioPago(venta.medioPago)}
                       </span>
                     </TableCell>
 
@@ -179,13 +186,24 @@ export function VentasTable({
                               )}
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-44">
+                          <DropdownMenuContent align="end" className="w-48">
                             <DropdownMenuItem
                               onClick={() => onVerDetalle?.(venta.idVenta)}
                               className="cursor-pointer gap-2"
                             >
                               <Eye className="size-4 text-accent" />
                               <span>Ver Detalle</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => imprimirComprobante(venta)}
+                              className="cursor-pointer gap-2"
+                            >
+                              <Printer className="size-4 text-muted-foreground" />
+                              <span>
+                                {venta.idCliente
+                                  ? "Imprimir Factura C"
+                                  : "Imprimir Ticket"}
+                              </span>
                             </DropdownMenuItem>
                             {esGestor && !anulada && (
                               <DropdownMenuItem

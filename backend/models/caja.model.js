@@ -77,6 +77,7 @@ export const getResumenVentasDesde = async (idCierre) => {
     debito: 0,
     credito: 0,
     qr: 0,
+    cuenta_corriente: 0,
   };
 
   let cantidadOperaciones = 0;
@@ -95,10 +96,17 @@ export const getResumenVentasDesde = async (idCierre) => {
   const ventasTransferencia = Math.round(desglose.transferencia * 100) / 100;
   const ventasTarjeta =
     Math.round((desglose.debito + desglose.credito) * 100) / 100;
+  const ventasCuentaCorriente =
+    Math.round(desglose.cuenta_corriente * 100) / 100;
   const ventasOtros = Math.round(desglose.qr * 100) / 100;
   const totalVentas =
     Math.round(
-      (ventasEfectivo + ventasTransferencia + ventasTarjeta + ventasOtros) * 100
+      (ventasEfectivo +
+        ventasTransferencia +
+        ventasTarjeta +
+        ventasCuentaCorriente +
+        ventasOtros) *
+        100
     ) / 100;
 
   return {
@@ -106,6 +114,7 @@ export const getResumenVentasDesde = async (idCierre) => {
     ventasEfectivo,
     ventasTransferencia,
     ventasTarjeta,
+    ventasCuentaCorriente,
     cantidadOperaciones,
     desgloseMediosPago: desglose,
   };

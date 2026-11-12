@@ -1,12 +1,31 @@
 import { useEffect, useState } from "react";
-import { Check, Search, UserPlus, X } from "lucide-react";
-import { getClientes } from "@/service/cliente.service";
+import { AlertTriangle, Check, Search, UserPlus, Wallet, X } from "lucide-react";
+import {
+  getClientes,
+  MONTOS_CUENTA_CORRIENTE,
+} from "@/service/cliente.service";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
-export default function RegistroCliente({ value, onChange, disabled = false }) {
+const formatoPrecio = (valor) =>
+  `$${Number(valor || 0).toLocaleString("es-AR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+
+const formatoMontoCorto = (valor) =>
+  `$${Number(valor || 0).toLocaleString("es-AR")}`;
+
+export default function RegistroCliente({
+  value,
+  onChange,
+  disabled = false,
+  modoFiado = false,
+  totalCompra = 0,
+}) {
   const [clientes, setClientes] = useState([]);
   const [busqueda, setBusqueda] = useState("");
   const [mostrarResultados, setMostrarResultados] = useState(false);
@@ -20,6 +39,7 @@ export default function RegistroCliente({ value, onChange, disabled = false }) {
     numero_documento: "",
     telefono: "",
     email: "",
+    limite_credito: 0,
   };
 
   useEffect(() => {
@@ -73,41 +93,106 @@ export default function RegistroCliente({ value, onChange, disabled = false }) {
         .slice(0, 5)
     : [];
 
+  const disponibleClienteSeleccionado = clienteSeleccionado
+    ? Number(
+        clienteSeleccionado.credito_disponible ??
+          Math.max(
+            0,
+            Number(clienteSeleccionado.limite_credito || 0) -
+              Number(clienteSeleccionado.deuda_actual || 0)
+          )
+      )
+    : 0;
+
+  const saldoRestanteSeleccionado = Math.round(
+    (disponibleClienteSeleccionado - Number(totalCompra || 0)) * 100
+  ) / 100;
+
   return (
     <div className="flex flex-col gap-3 rounded-lg border border-border bg-muted/20 p-3">
       {/* Buscador de cliente existente */}
       {!registrarNuevo && (
         <div className="relative">
           <Label className="mb-1 block text-xs">
-            Buscar cliente registrado (por DNI/CUIT o nombre)
+            {modoFiado
+              ? "Seleccionar cliente para descontar de su Cuenta Corriente *"
+              : "Buscar cliente registrado (por DNI/CUIT o nombre)"}
           </Label>
           {clienteSeleccionado ? (
-            <div className="flex items-center justify-between rounded-lg border border-accent/40 bg-accent/10 px-3 py-2 text-sm">
-              <div className="flex items-center gap-2 min-w-0">
-                <Check className="size-4 text-accent shrink-0" />
-                <span className="font-medium truncate">
-                  {clienteSeleccionado.nombre}{" "}
-                  {clienteSeleccionado.apellido || ""}
-                </span>
-                <span className="text-xs font-mono text-muted-foreground shrink-0">
-                  ({clienteSeleccionado.tipo_documento}:{" "}
-                  {clienteSeleccionado.numero_documento})
-                </span>
+            <div className="flex flex-col gap-2 rounded-lg border border-accent/40 bg-accent/10 px-3 py-2 text-sm">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <Check className="size-4 text-accent shrink-0" />
+                  <span className="font-medium truncate">
+                    {clienteSeleccionado.nombre}{" "}
+                    {clienteSeleccionado.apellido || ""}
+                  </span>
+                  <span className="text-xs font-mono text-muted-foreground shrink-0">
+                    ({clienteSeleccionado.tipo_documento}:{" "}
+                    {clienteSeleccionado.numero_documento})
+                  </span>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-xs"
+                  disabled={disabled}
+                  onClick={() =>
+                    actualizar({
+                      clienteSeleccionado: null,
+                    })
+                  }
+                  title="Quitar cliente seleccionado"
+                >
+                  <X className="size-3.5" />
+                </Button>
               </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-xs"
-                disabled={disabled}
-                onClick={() =>
-                  actualizar({
-                    clienteSeleccionado: null,
-                  })
-                }
-                title="Quitar cliente seleccionado"
-              >
-                <X className="size-3.5" />
-              </Button>
+
+              {/* Resumen de Cuenta Corriente del cliente seleccionado */}
+              {clienteSeleccionado.cuenta_corriente_habilitada ? (
+                <div
+                  className={cn(
+                    "flex flex-wrap items-center justify-between gap-2 rounded-md border px-2.5 py-1.5 text-xs",
+                    modoFiado && saldoRestanteSeleccionado < 0
+                      ? "bg-red-500/10 text-red-700 dark:bg-red-500/15 dark:text-red-400 border-red-500/25"
+                      : "bg-card text-foreground border-border"
+                  )}
+                >
+                  <div>
+                    <span className="text-muted-foreground">Saldo disponible: </span>
+                    <strong>{formatoPrecio(disponibleClienteSeleccionado)}</strong>
+                  </div>
+                  {modoFiado && (
+                    <div>
+                      {saldoRestanteSeleccionado >= 0 ? (
+                        <>
+                          <span className="text-muted-foreground">
+                            Quedará a favor:{" "}
+                          </span>
+                          <strong className="text-emerald-600 dark:text-emerald-400">
+                            {formatoPrecio(saldoRestanteSeleccionado)}
+                          </strong>
+                        </>
+                      ) : (
+                        <span className="font-semibold flex items-center gap-1">
+                          <AlertTriangle className="size-3.5" />
+                          Saldo insuficiente (faltan{" "}
+                          {formatoPrecio(Math.abs(saldoRestanteSeleccionado))})
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                modoFiado && (
+                  <div className="flex items-center gap-1.5 rounded-md border bg-red-500/10 text-red-700 dark:bg-red-500/15 dark:text-red-400 border-red-500/25 px-2.5 py-1.5 text-xs font-medium">
+                    <AlertTriangle className="size-3.5 shrink-0" />
+                    <span>
+                      Este cliente no tiene una Cuenta Corriente habilitada.
+                    </span>
+                  </div>
+                )
+              )}
             </div>
           ) : (
             <>
@@ -128,26 +213,50 @@ export default function RegistroCliente({ value, onChange, disabled = false }) {
               </div>
 
               {mostrarResultados && sugerencias.length > 0 && (
-                <div className="absolute left-0 right-0 top-full z-30 mt-1 max-h-44 overflow-y-auto rounded-lg border border-border bg-card shadow-md">
-                  {sugerencias.map((c) => (
-                    <button
-                      key={c.id_cliente}
-                      type="button"
-                      onClick={() => {
-                        actualizar({ clienteSeleccionado: c });
-                        setBusqueda("");
-                        setMostrarResultados(false);
-                      }}
-                      className="flex w-full items-center justify-between px-3 py-2 text-left text-xs hover:bg-muted/60 border-b border-border/50 last:border-b-0 cursor-pointer"
-                    >
-                      <span className="font-medium text-foreground truncate mr-2">
-                        {c.nombre} {c.apellido || ""}
-                      </span>
-                      <span className="font-mono text-muted-foreground shrink-0">
-                        {c.tipo_documento}: {c.numero_documento}
-                      </span>
-                    </button>
-                  ))}
+                <div className="absolute left-0 right-0 top-full z-30 mt-1 max-h-48 overflow-y-auto rounded-lg border border-border bg-card shadow-md">
+                  {sugerencias.map((c) => {
+                    const disp = Number(
+                      c.credito_disponible ??
+                        Math.max(
+                          0,
+                          Number(c.limite_credito || 0) -
+                            Number(c.deuda_actual || 0)
+                        )
+                    );
+                    return (
+                      <button
+                        key={c.id_cliente}
+                        type="button"
+                        onClick={() => {
+                          actualizar({ clienteSeleccionado: c });
+                          setBusqueda("");
+                          setMostrarResultados(false);
+                        }}
+                        className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-xs hover:bg-muted/60 border-b border-border/50 last:border-b-0 cursor-pointer"
+                      >
+                        <div className="min-w-0">
+                          <div className="font-medium text-foreground truncate">
+                            {c.nombre} {c.apellido || ""}
+                          </div>
+                          <div className="font-mono text-[11px] text-muted-foreground">
+                            {c.tipo_documento}: {c.numero_documento}
+                          </div>
+                        </div>
+                        <span
+                          className={cn(
+                            "shrink-0 rounded px-1.5 py-0.5 text-[11px] font-medium border",
+                            c.cuenta_corriente_habilitada
+                              ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20"
+                              : "bg-muted text-muted-foreground border-border"
+                          )}
+                        >
+                          {c.cuenta_corriente_habilitada
+                            ? `Disp: ${formatoPrecio(disp)}`
+                            : "Sin Cta. Cte."}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </>
@@ -265,6 +374,56 @@ export default function RegistroCliente({ value, onChange, disabled = false }) {
                 value={nuevoCliente.email || ""}
                 onChange={(e) => handleCambioNuevo("email", e.target.value)}
               />
+            </div>
+          </div>
+
+          {/* Selección de Cuenta Corriente para nuevo cliente */}
+          <div className="space-y-1.5 pt-1">
+            <div className="flex items-center justify-between">
+              <Label className="text-xs flex items-center gap-1">
+                <Wallet className="size-3.5 text-accent" />
+                <span>
+                  Cuenta Corriente (Saldo a favor){modoFiado ? " *" : ""}
+                </span>
+              </Label>
+              <span className="text-[11px] font-semibold text-accent">
+                {Number(nuevoCliente.limite_credito) > 0
+                  ? formatoMontoCorto(nuevoCliente.limite_credito)
+                  : "Sin cuenta"}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
+              <Button
+                type="button"
+                size="sm"
+                disabled={disabled}
+                variant={
+                  Number(nuevoCliente.limite_credito || 0) === 0
+                    ? "accent"
+                    : "outline"
+                }
+                onClick={() => handleCambioNuevo("limite_credito", 0)}
+                className="w-full max-w-none text-xs cursor-pointer"
+              >
+                Sin cuenta
+              </Button>
+              {MONTOS_CUENTA_CORRIENTE.map((monto) => (
+                <Button
+                  key={monto}
+                  type="button"
+                  size="sm"
+                  disabled={disabled}
+                  variant={
+                    Number(nuevoCliente.limite_credito) === monto
+                      ? "accent"
+                      : "outline"
+                  }
+                  onClick={() => handleCambioNuevo("limite_credito", monto)}
+                  className="w-full max-w-none text-xs cursor-pointer"
+                >
+                  {formatoMontoCorto(monto)}
+                </Button>
+              ))}
             </div>
           </div>
         </div>

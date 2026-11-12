@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
-import { Loader2, UserCheck } from "lucide-react";
-import { actualizarCliente } from "@/service/cliente.service";
+import { Loader2, RotateCcw, UserCheck, Wallet } from "lucide-react";
+import {
+  actualizarCliente,
+  MONTOS_CUENTA_CORRIENTE,
+} from "@/service/cliente.service";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +17,15 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { showError, showSuccess, showWarning } from "@/utils/alerts";
+
+const formatoMoneda = (valor) =>
+  `$${Number(valor || 0).toLocaleString("es-AR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+
+const formatoMontoCorto = (valor) =>
+  `$${Number(valor || 0).toLocaleString("es-AR")}`;
 
 export function EditarClienteModal({
   open,
@@ -29,12 +41,17 @@ export function EditarClienteModal({
     email: "",
     telefono: "",
     direccion: "",
+    limite_credito: 0,
+    deuda_actual: 0,
     activo: true,
   });
   const [guardando, setGuardando] = useState(false);
 
   useEffect(() => {
     if (cliente && open) {
+      const habilitada = Boolean(cliente.cuenta_corriente_habilitada);
+      const limite = habilitada ? Number(cliente.limite_credito || 0) : 0;
+
       setForm({
         nombre: cliente.nombre || "",
         apellido: cliente.apellido || "",
@@ -43,6 +60,8 @@ export function EditarClienteModal({
         email: cliente.email || "",
         telefono: String(cliente.telefono || "").replace(/\D/g, ""),
         direccion: cliente.direccion || "",
+        limite_credito: limite,
+        deuda_actual: Number(cliente.deuda_actual || 0),
         activo: Boolean(cliente.activo ?? true),
       });
     }
@@ -54,6 +73,19 @@ export function EditarClienteModal({
     }
   };
 
+  const handleSeleccionarMontoCuenta = (monto) => {
+    const nuevoLimite = Number(monto) || 0;
+    // Si el nuevo límite es menor a la deuda actual (o se quita la cuenta), reiniciamos deuda_actual a 0
+    const nuevaDeuda =
+      nuevoLimite < Number(form.deuda_actual) ? 0 : Number(form.deuda_actual);
+
+    setForm({
+      ...form,
+      limite_credito: nuevoLimite,
+      deuda_actual: nuevaDeuda,
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!cliente) return;
@@ -62,6 +94,8 @@ export function EditarClienteModal({
     const apellido = form.apellido.trim();
     const numero_documento = form.numero_documento.trim();
     const telefono = form.telefono.trim();
+    const limiteCredito = Number(form.limite_credito) || 0;
+    const deudaActual = limiteCredito > 0 ? Number(form.deuda_actual) || 0 : 0;
 
     if (!nombre) {
       showWarning("El nombre del cliente es obligatorio.");
@@ -94,6 +128,9 @@ export function EditarClienteModal({
         email: form.email.trim(),
         telefono,
         direccion: form.direccion.trim(),
+        cuenta_corriente_habilitada: limiteCredito > 0,
+        limite_credito: limiteCredito,
+        deuda_actual: deudaActual,
         activo: form.activo,
       });
 
@@ -121,6 +158,11 @@ export function EditarClienteModal({
     }
   };
 
+  const saldoDisponible = Math.max(
+    0,
+    Number(form.limite_credito || 0) - Number(form.deuda_actual || 0)
+  );
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
@@ -136,7 +178,7 @@ export function EditarClienteModal({
             <div>
               <DialogTitle>Editar Cliente</DialogTitle>
               <DialogDescription>
-                Modificá la información de contacto y facturación del cliente.
+                Modificá la información de contacto, facturación y cuenta corriente.
               </DialogDescription>
             </div>
           </div>
@@ -243,6 +285,79 @@ export function EditarClienteModal({
               value={form.direccion}
               onChange={(e) => setForm({ ...form, direccion: e.target.value })}
             />
+          </div>
+
+          {/* Configuración de Cuenta Corriente con montos fijos */}
+          <div className="space-y-2.5 rounded-lg border border-border bg-muted/20 p-3">
+            <div className="flex items-center justify-between gap-2">
+              <Label className="text-sm font-medium flex items-center gap-1.5">
+                <Wallet className="size-4 text-accent" />
+                <span>Cuenta Corriente (Saldo para Fiado)</span>
+              </Label>
+              <span className="text-xs font-semibold text-accent">
+                {Number(form.limite_credito) > 0
+                  ? `Límite: ${formatoMontoCorto(form.limite_credito)}`
+                  : "Sin cuenta corriente"}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
+              <Button
+                type="button"
+                size="sm"
+                variant={Number(form.limite_credito) === 0 ? "accent" : "outline"}
+                onClick={() => handleSeleccionarMontoCuenta(0)}
+                className="w-full max-w-none text-xs cursor-pointer"
+              >
+                Sin cuenta
+              </Button>
+              {MONTOS_CUENTA_CORRIENTE.map((monto) => (
+                <Button
+                  key={monto}
+                  type="button"
+                  size="sm"
+                  variant={
+                    Number(form.limite_credito) === monto ? "accent" : "outline"
+                  }
+                  onClick={() => handleSeleccionarMontoCuenta(monto)}
+                  className="w-full max-w-none text-xs cursor-pointer"
+                >
+                  {formatoMontoCorto(monto)}
+                </Button>
+              ))}
+            </div>
+
+            {Number(form.limite_credito) > 0 && (
+              <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border/80 bg-card px-3 py-2 text-xs">
+                <div className="space-y-0.5">
+                  <div>
+                    <span className="text-muted-foreground">Saldo disponible: </span>
+                    <strong className="text-emerald-600 dark:text-emerald-400">
+                      {formatoMoneda(saldoDisponible)}
+                    </strong>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Consumido (fiado): </span>
+                    <strong className="text-foreground">
+                      {formatoMoneda(form.deuda_actual)}
+                    </strong>
+                  </div>
+                </div>
+
+                {Number(form.deuda_actual) > 0 && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setForm({ ...form, deuda_actual: 0 })}
+                    className="h-7 px-2.5 text-xs gap-1 max-w-none cursor-pointer"
+                  >
+                    <RotateCcw className="size-3" />
+                    <span>Saldar deuda / Restablecer</span>
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Switch para activar / desactivar */}

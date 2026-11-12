@@ -1,7 +1,15 @@
 import React, { useState, useEffect } from "react";
 import Swal from "sweetalert2";
 import { showError, showWarning } from "@/utils/alerts";
-import { Banknote, CreditCard, Landmark, Loader2, RotateCcw } from "lucide-react";
+import { imprimirComprobante } from "@/utils/comprobante";
+import {
+  Banknote,
+  CreditCard,
+  Landmark,
+  Loader2,
+  RotateCcw,
+  Wallet,
+} from "lucide-react";
 import { registrarVenta } from "@/service/ventas.service";
 import { crearCliente } from "@/service/cliente.service";
 import { Button } from "@/components/ui/button";
@@ -22,6 +30,7 @@ const MEDIOS_PAGO = [
   { id: "efectivo", label: "Efectivo", icon: Banknote },
   { id: "transferencia", label: "Transferencia", icon: Landmark },
   { id: "tarjeta", label: "Tarjeta", icon: CreditCard },
+  { id: "cuenta_corriente", label: "Fiado", icon: Wallet },
 ];
 
 const ESTADO_FACTURA_INICIAL = {
@@ -34,6 +43,7 @@ const ESTADO_FACTURA_INICIAL = {
     numero_documento: "",
     telefono: "",
     email: "",
+    limite_credito: 0,
   },
 };
 
@@ -53,6 +63,8 @@ export default function CalculadoraCambio({
   const [procesando, setProcesando] = useState(false);
 
   const esEfectivo = medioPago === "efectivo";
+  const esFiado = medioPago === "cuenta_corriente";
+  const requiereCliente = emitirFactura || esFiado;
 
   useEffect(() => {
     if (open) {
@@ -113,22 +125,65 @@ export default function CalculadoraCambio({
       }
     }
 
-    // Validación de cliente si se marcó "Emitir factura"
-    if (emitirFactura) {
+    // Validación de cliente si se marcó "Emitir factura" o si el pago es "Fiado" (cuenta_corriente)
+    if (requiereCliente) {
       if (datosFactura.registrarNuevo) {
         const nombre = datosFactura.nuevoCliente.nombre.trim();
         const numeroDoc = datosFactura.nuevoCliente.numero_documento.trim();
+        const limiteNuevo = Number(datosFactura.nuevoCliente.limite_credito) || 0;
+
         if (!nombre || !numeroDoc) {
           showWarning(
-            "Completá el nombre y el número de documento para registrar al cliente de la factura."
+            "Completá el nombre y el número de documento para registrar al cliente."
+          );
+          return;
+        }
+
+        if (esFiado && limiteNuevo <= 0) {
+          showWarning(
+            "Seleccioná un monto de Cuenta Corriente ($100.000, $200.000, $300.000 o $500.000) para poder cobrarle fiado al nuevo cliente."
+          );
+          return;
+        }
+
+        if (esFiado && limiteNuevo < total) {
+          showWarning(
+            `El monto de la venta (${format(total)}) supera el límite de cuenta corriente seleccionado (${format(limiteNuevo)}).`
           );
           return;
         }
       } else if (!datosFactura.clienteSeleccionado) {
         showWarning(
-          "Seleccioná un cliente existente o marcá 'Registrar cliente nuevo' para emitir la factura."
+          esFiado
+            ? "Seleccioná un cliente con Cuenta Corriente o registrá uno nuevo para cobrar al fiado."
+            : "Seleccioná un cliente existente o marcá 'Registrar cliente nuevo' para emitir la factura."
         );
         return;
+      } else if (esFiado) {
+        const cli = datosFactura.clienteSeleccionado;
+        if (!cli.cuenta_corriente_habilitada) {
+          showWarning(
+            `El cliente "${cli.nombre} ${cli.apellido || ""}" no tiene una Cuenta Corriente habilitada.`
+          );
+          return;
+        }
+
+        const disponible = Number(
+          cli.credito_disponible ??
+            Math.max(
+              0,
+              Number(cli.limite_credito || 0) - Number(cli.deuda_actual || 0)
+            )
+        );
+
+        if (disponible < total) {
+          showWarning(
+            `Saldo insuficiente en la Cuenta Corriente del cliente. Disponible: ${format(
+              disponible
+            )} — Total a cobrar: ${format(total)}.`
+          );
+          return;
+        }
       }
     }
 
@@ -139,9 +194,13 @@ export default function CalculadoraCambio({
 
     try {
       let idCliente = null;
+      let clienteAsociado = null;
+      let saldoDisponiblePrevio = 0;
 
-      if (emitirFactura) {
+      if (requiereCliente) {
         if (datosFactura.registrarNuevo) {
+          const limiteNuevo =
+            Number(datosFactura.nuevoCliente.limite_credito) || 0;
           const resCliente = await crearCliente({
             nombre: datosFactura.nuevoCliente.nombre.trim(),
             apellido: datosFactura.nuevoCliente.apellido.trim(),
@@ -150,10 +209,24 @@ export default function CalculadoraCambio({
               datosFactura.nuevoCliente.numero_documento.trim(),
             telefono: (datosFactura.nuevoCliente.telefono || "").trim(),
             email: (datosFactura.nuevoCliente.email || "").trim(),
+            cuenta_corriente_habilitada: limiteNuevo > 0,
+            limite_credito: limiteNuevo,
           });
-          idCliente = resCliente?.client?.id_cliente ?? null;
+          clienteAsociado = resCliente?.client ?? null;
+          idCliente = clienteAsociado?.id_cliente ?? null;
+          saldoDisponiblePrevio = limiteNuevo;
         } else {
-          idCliente = datosFactura.clienteSeleccionado?.id_cliente ?? null;
+          const cli = datosFactura.clienteSeleccionado;
+          clienteAsociado = cli ?? null;
+          idCliente = cli?.id_cliente ?? null;
+          saldoDisponiblePrevio = Number(
+            cli?.credito_disponible ??
+              Math.max(
+                0,
+                Number(cli?.limite_credito || 0) -
+                  Number(cli?.deuda_actual || 0)
+              )
+          );
         }
       }
 
@@ -173,23 +246,56 @@ export default function CalculadoraCambio({
         ventaRegistrada = data?.venta ?? null;
       }
 
+      const esFacturaC = Boolean(idCliente);
+      const textoBotonImprimir = esFacturaC
+        ? "Imprimir Factura C"
+        : "Imprimir Ticket";
+
+      let tituloSwal = "Venta registrada";
+      let textoSwal = "";
+
       if (esEfectivo) {
-        await Swal.fire({
-          title: "Venta registrada",
-          text: `Devolver ${format(cambio)} de cambio.`,
-          icon: "success",
-        });
+        textoSwal = `Devolver ${format(cambio)} de cambio.`;
+      } else if (esFiado) {
+        const saldoRestante = Math.max(0, saldoDisponiblePrevio - total);
+        tituloSwal = "Venta al fiado registrada";
+        textoSwal = `Se descontaron ${format(
+          total
+        )} de la Cuenta Corriente del cliente. Saldo disponible restante: ${format(
+          saldoRestante
+        )}.`;
       } else {
         const etiquetaMedio =
           medioPago === "tarjeta"
             ? `tarjeta (${tipoTarjeta})`
             : "transferencia";
+        textoSwal = `Cobro por ${format(
+          total
+        )} mediante ${etiquetaMedio}. No requiere devolver cambio.`;
+      }
 
-        await Swal.fire({
-          title: "Venta registrada",
-          text: `Cobro por ${format(total)} mediante ${etiquetaMedio}. No requiere devolver cambio.`,
-          icon: "success",
-        });
+      const resultadoSwal = await Swal.fire({
+        title: tituloSwal,
+        text: textoSwal,
+        icon: "success",
+        showCancelButton: true,
+        confirmButtonText: textoBotonImprimir,
+        cancelButtonText: "Cerrar",
+        reverseButtons: true,
+      });
+
+      if (resultadoSwal.isConfirmed && ventaRegistrada) {
+        imprimirComprobante(
+          {
+            ...ventaRegistrada,
+            cliente: clienteAsociado || undefined,
+          },
+          {
+            tipo: esFacturaC ? "factura" : "ticket",
+            montoRecibido,
+            cambio,
+          }
+        );
       }
 
       onOpenChange?.(false);
@@ -239,7 +345,7 @@ export default function CalculadoraCambio({
 
           <div>
             <Label className="mb-1 block">Medio de pago</Label>
-            <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-2">
               {MEDIOS_PAGO.map(({ id, label, icon: Icon }) => {
                 const seleccionado = medioPago === id;
                 return (
@@ -294,6 +400,8 @@ export default function CalculadoraCambio({
                 placeholder={
                   esEfectivo
                     ? "0.00"
+                    : esFiado
+                    ? "Se descontará de la Cuenta Corriente del cliente"
                     : "No aplica para pagos con tarjeta o transferencia"
                 }
                 autoFocus={esEfectivo}
@@ -330,27 +438,31 @@ export default function CalculadoraCambio({
             ))}
           </div>
 
-          <div className="flex pt-3">
-            <div className="flex items-center justify-center space-x-2 w-full">
-              <Checkbox
-                id="emitir-factura"
-                checked={emitirFactura}
-                onCheckedChange={setEmitirFactura}
-                disabled={procesando}
-                className="border-border data-checked:bg-accent data-checked:border-accent"
-              />
-              <Label htmlFor="emitir-factura" className="cursor-pointer">
-                Emitir factura
-              </Label>
+          {!esFiado && (
+            <div className="flex pt-3">
+              <div className="flex items-center justify-center space-x-2 w-full">
+                <Checkbox
+                  id="emitir-factura"
+                  checked={emitirFactura}
+                  onCheckedChange={setEmitirFactura}
+                  disabled={procesando}
+                  className="border-border data-checked:bg-accent data-checked:border-accent"
+                />
+                <Label htmlFor="emitir-factura" className="cursor-pointer">
+                  Emitir factura
+                </Label>
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Componente hijo renderizado condicionalmente */}
-          {emitirFactura && (
+          {/* Selección / Registro de cliente (obligatorio en Fiado o al emitir factura) */}
+          {requiereCliente && (
             <RegistroCliente
               value={datosFactura}
               onChange={setDatosFactura}
               disabled={procesando}
+              modoFiado={esFiado}
+              totalCompra={total}
             />
           )}
 
@@ -375,6 +487,8 @@ export default function CalculadoraCambio({
                   <Loader2 className="size-4 animate-spin" />
                   <span>Cobrar...</span>
                 </>
+              ) : esFiado ? (
+                "Confirmar Fiado"
               ) : (
                 "Confirmar Cobro"
               )}

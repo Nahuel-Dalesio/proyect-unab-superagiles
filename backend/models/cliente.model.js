@@ -69,11 +69,13 @@ export const createClient = async ({
   email,
   telefono,
   direccion,
+  cuenta_corriente_habilitada = false,
+  limite_credito = 0,
 }) => {
   const [result] = await pool.query(
     `INSERT INTO clientes
-      (nombre, apellido, tipo_documento, numero_documento, email, telefono, direccion)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      (nombre, apellido, tipo_documento, numero_documento, email, telefono, direccion, cuenta_corriente_habilitada, limite_credito, deuda_actual)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0)`,
     [
       nombre,
       apellido,
@@ -82,6 +84,8 @@ export const createClient = async ({
       email,
       telefono,
       direccion,
+      Boolean(cuenta_corriente_habilitada),
+      Number(limite_credito) || 0,
     ]
   );
 
@@ -98,6 +102,7 @@ const UPDATABLE_COLUMNS = {
   direccion: "direccion",
   cuenta_corriente_habilitada: "cuenta_corriente_habilitada",
   limite_credito: "limite_credito",
+  deuda_actual: "deuda_actual",
   activo: "activo",
 };
 

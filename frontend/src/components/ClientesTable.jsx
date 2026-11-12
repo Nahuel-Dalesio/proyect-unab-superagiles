@@ -28,6 +28,12 @@ import { cn } from "@/lib/utils";
 
 const ITEMS_POR_PAGINA = 10;
 
+const formatoPrecio = (valor) =>
+  `$${Number(valor || 0).toLocaleString("es-AR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+
 export function ClientesTable({
   clientes = [],
   cargando = false,
@@ -37,7 +43,7 @@ export function ClientesTable({
   className,
 }) {
   const [paginaActual, setPaginaActual] = useState(1);
-  const totalColumnas = esGestor ? 7 : 6;
+  const totalColumnas = esGestor ? 8 : 7;
 
   const clientesOrdenados = useMemo(
     () =>
@@ -74,7 +80,7 @@ export function ClientesTable({
       )}
     >
       <div className="flex-1 min-h-0 overflow-auto">
-        <Table containerClassName="overflow-visible" className="min-w-[900px] w-full">
+        <Table containerClassName="overflow-visible" className="min-w-[1000px] w-full">
           <TableHeader className="sticky top-0 z-10 bg-card shadow-xs [&_th]:bg-card">
             <TableRow className="hover:bg-transparent border-b">
               <TableHead className="px-4 py-3 font-normal text-foreground w-20 whitespace-nowrap">
@@ -85,6 +91,9 @@ export function ClientesTable({
               </TableHead>
               <TableHead className="px-4 py-3 font-normal text-foreground whitespace-nowrap">
                 Documento
+              </TableHead>
+              <TableHead className="px-4 py-3 font-normal text-foreground whitespace-nowrap">
+                Cuenta Corriente
               </TableHead>
               <TableHead className="px-4 py-3 font-normal text-foreground whitespace-nowrap">
                 Teléfono
@@ -125,93 +134,127 @@ export function ClientesTable({
                 </TableCell>
               </TableRow>
             ) : (
-              clientesPaginados.map((item) => (
-                <TableRow
-                  key={item.id_cliente}
-                  className={cn(
-                    "transition-colors",
-                    !item.activo && "opacity-60 bg-muted/20"
-                  )}
-                >
-                  <TableCell className="px-4 py-3">
-                    <div className="flex items-center">
-                      <Switch
-                        checked={Boolean(item.activo)}
-                        disabled={!esGestor}
-                        onCheckedChange={() => onToggleActivo?.(item)}
-                        aria-label={`Cambiar estado de ${item.nombre} ${item.apellido || ""}`}
-                      />
-                    </div>
-                  </TableCell>
+              clientesPaginados.map((item) => {
+                const tieneCuenta = Boolean(item.cuenta_corriente_habilitada);
+                const limite = Number(item.limite_credito || 0);
+                const deuda = Number(item.deuda_actual || 0);
+                const disponible =
+                  item.credito_disponible !== undefined
+                    ? Number(item.credito_disponible)
+                    : Math.max(0, limite - deuda);
 
-                  <TableCell className="px-4 py-3 font-medium text-foreground">
-                    {item.nombre} {item.apellido || ""}
-                  </TableCell>
-
-                  <TableCell className="px-4 py-3">
-                    <span className="inline-flex items-center rounded-md px-2 py-0.5 text-xs font-mono border bg-muted/40 text-foreground">
-                      <span className="font-semibold mr-1">{item.tipo_documento}:</span>
-                      {item.numero_documento}
-                    </span>
-                  </TableCell>
-
-                  <TableCell className="px-4 py-3 text-muted-foreground text-sm">
-                    {item.telefono || "—"}
-                  </TableCell>
-
-                  <TableCell className="px-4 py-3 text-muted-foreground text-sm">
-                    {item.email || "—"}
-                  </TableCell>
-
-                  <TableCell className="px-4 py-3 text-muted-foreground text-sm">
-                    {item.direccion || "—"}
-                  </TableCell>
-
-                  {esGestor && (
-                    <TableCell className="px-4 py-3 text-right">
-                      <div className="flex items-center justify-end">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="size-8 hover:bg-muted text-muted-foreground hover:text-foreground cursor-pointer"
-                              aria-label="Opciones de cliente"
-                            >
-                              <EllipsisVertical className="size-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-44">
-                            <DropdownMenuItem
-                              onClick={() => onEditarCliente?.(item)}
-                              className="cursor-pointer gap-2"
-                            >
-                              <Pencil className="size-4 text-muted-foreground" />
-                              <span>Editar Cliente</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => onToggleActivo?.(item)}
-                              className="cursor-pointer gap-2"
-                            >
-                              {item.activo ? (
-                                <>
-                                  <UserX className="size-4 text-destructive" />
-                                  <span className="text-destructive">Desactivar</span>
-                                </>
-                              ) : (
-                                <>
-                                  <UserCheck className="size-4 text-emerald-600" />
-                                  <span className="text-emerald-600">Activar</span>
-                                </>
-                              )}
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                return (
+                  <TableRow
+                    key={item.id_cliente}
+                    className={cn(
+                      "transition-colors",
+                      !item.activo && "opacity-60 bg-muted/20"
+                    )}
+                  >
+                    <TableCell className="px-4 py-3">
+                      <div className="flex items-center">
+                        <Switch
+                          checked={Boolean(item.activo)}
+                          disabled={!esGestor}
+                          onCheckedChange={() => onToggleActivo?.(item)}
+                          aria-label={`Cambiar estado de ${item.nombre} ${item.apellido || ""}`}
+                        />
                       </div>
                     </TableCell>
-                  )}
-                </TableRow>
-              ))
+
+                    <TableCell className="px-4 py-3 font-medium text-foreground whitespace-nowrap">
+                      {item.nombre} {item.apellido || ""}
+                    </TableCell>
+
+                    <TableCell className="px-4 py-3 whitespace-nowrap">
+                      <span className="inline-flex items-center rounded-md px-2 py-0.5 text-xs font-mono border bg-muted/40 text-foreground">
+                        <span className="font-semibold mr-1">{item.tipo_documento}:</span>
+                        {item.numero_documento}
+                      </span>
+                    </TableCell>
+
+                    <TableCell className="px-4 py-3 whitespace-nowrap">
+                      {tieneCuenta ? (
+                        <div className="flex flex-col gap-0.5">
+                          <span
+                            className={cn(
+                              "inline-flex w-fit items-center rounded-md px-2 py-0.5 text-xs font-semibold border",
+                              disponible > 0
+                                ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20"
+                                : "bg-red-500/10 text-red-700 dark:bg-red-500/15 dark:text-red-400 border-red-500/25"
+                            )}
+                          >
+                            Disp: {formatoPrecio(disponible)}
+                          </span>
+                          <span className="text-[11px] text-muted-foreground">
+                            Límite: {formatoPrecio(limite)}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium border bg-muted text-muted-foreground border-border">
+                          Sin cuenta
+                        </span>
+                      )}
+                    </TableCell>
+
+                    <TableCell className="px-4 py-3 text-muted-foreground text-sm whitespace-nowrap">
+                      {item.telefono || "—"}
+                    </TableCell>
+
+                    <TableCell className="px-4 py-3 text-muted-foreground text-sm whitespace-nowrap">
+                      {item.email || "—"}
+                    </TableCell>
+
+                    <TableCell className="px-4 py-3 text-muted-foreground text-sm">
+                      {item.direccion || "—"}
+                    </TableCell>
+
+                    {esGestor && (
+                      <TableCell className="px-4 py-3 text-right">
+                        <div className="flex items-center justify-end">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="size-8 hover:bg-muted text-muted-foreground hover:text-foreground cursor-pointer"
+                                aria-label="Opciones de cliente"
+                              >
+                                <EllipsisVertical className="size-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-44">
+                              <DropdownMenuItem
+                                onClick={() => onEditarCliente?.(item)}
+                                className="cursor-pointer gap-2"
+                              >
+                                <Pencil className="size-4 text-muted-foreground" />
+                                <span>Editar Cliente</span>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => onToggleActivo?.(item)}
+                                className="cursor-pointer gap-2"
+                              >
+                                {item.activo ? (
+                                  <>
+                                    <UserX className="size-4 text-destructive" />
+                                    <span className="text-destructive">Desactivar</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <UserCheck className="size-4 text-emerald-600" />
+                                    <span className="text-emerald-600">Activar</span>
+                                  </>
+                                )}
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </TableCell>
+                    )}
+                  </TableRow>
+                );
+              })
             )}
           </TableBody>
         </Table>
