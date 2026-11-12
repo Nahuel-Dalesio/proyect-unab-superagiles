@@ -25,7 +25,7 @@ jobs:
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: Frontend/dist   # <- ajustar si hace falta
+          path: frontend/dist   # <- ajustar si hace falta
   deploy:
     needs: build
     runs-on: ubuntu-latest
