@@ -3,6 +3,7 @@ import { Loader2, RotateCcw, UserCheck, Wallet } from "lucide-react";
 import {
   actualizarCliente,
   MONTOS_CUENTA_CORRIENTE,
+  registrarPagoCuentaCorriente,
 } from "@/service/cliente.service";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,6 +47,8 @@ export function EditarClienteModal({
     activo: true,
   });
   const [guardando, setGuardando] = useState(false);
+  const [montoPago, setMontoPago] = useState("");
+  const [pagando, setPagando] = useState(false);
 
   useEffect(() => {
     if (cliente && open) {
@@ -64,6 +67,7 @@ export function EditarClienteModal({
         deuda_actual: Number(cliente.deuda_actual || 0),
         activo: Boolean(cliente.activo ?? true),
       });
+      setMontoPago("");
     }
   }, [cliente, open]);
 
@@ -74,17 +78,79 @@ export function EditarClienteModal({
   };
 
   const handleSeleccionarMontoCuenta = (monto) => {
-    const nuevoLimite = Number(monto) || 0;
-    // Si el nuevo límite es menor a la deuda actual (o se quita la cuenta), reiniciamos deuda_actual a 0
-    const nuevaDeuda =
-      nuevoLimite < Number(form.deuda_actual) ? 0 : Number(form.deuda_actual);
+  const nuevoLimite = Number(monto) || 0;
+  const deudaActual = Number(form.deuda_actual) || 0;
 
-    setForm({
-      ...form,
-      limite_credito: nuevoLimite,
-      deuda_actual: nuevaDeuda,
-    });
-  };
+  if (nuevoLimite < deudaActual) {
+    showWarning(
+      "El límite de crédito no puede ser menor que la deuda pendiente del cliente."
+    );
+    return;
+  }
+
+  setForm({
+    ...form,
+    limite_credito: nuevoLimite,
+  });
+};
+
+const handleRegistrarPago = async () => {
+  if (!cliente) return;
+
+  const monto = Number(montoPago);
+  const deudaActual = Number(form.deuda_actual) || 0;
+
+  if (
+    !Number.isFinite(monto) ||
+    monto <= 0 ||
+    Number(monto.toFixed(2)) !== monto
+  ) {
+    showWarning("Ingresá un monto mayor que 0 y con hasta 2 decimales.");
+    return;
+  }
+
+  if (monto > deudaActual) {
+    showWarning("El pago no puede superar la deuda pendiente.");
+    return;
+  }
+
+  setPagando(true);
+
+  try {
+    const data = await registrarPagoCuentaCorriente(
+      cliente.id_cliente,
+      monto
+    );
+
+    const clienteActualizado = data?.client;
+
+    setForm((formActual) => ({
+      ...formActual,
+      deuda_actual: Number(
+        clienteActualizado?.deuda_actual ?? deudaActual - monto
+      ),
+    }));
+
+    setMontoPago("");
+
+    showSuccess(
+      `Se registró un pago de ${formatoMoneda(monto)}.`,
+      "Pago registrado"
+    );
+
+    if (onSuccess) {
+      await onSuccess(clienteActualizado);
+    }
+  } catch (error) {
+    showError(
+      error.status
+        ? error.message
+        : "Error al registrar el pago de cuenta corriente"
+    );
+  } finally {
+    setPagando(false);
+  }
+};
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -95,7 +161,6 @@ export function EditarClienteModal({
     const numero_documento = form.numero_documento.trim();
     const telefono = form.telefono.trim();
     const limiteCredito = Number(form.limite_credito) || 0;
-    const deudaActual = limiteCredito > 0 ? Number(form.deuda_actual) || 0 : 0;
 
     if (!nombre) {
       showWarning("El nombre del cliente es obligatorio.");
@@ -130,7 +195,6 @@ export function EditarClienteModal({
         direccion: form.direccion.trim(),
         cuenta_corriente_habilitada: limiteCredito > 0,
         limite_credito: limiteCredito,
-        deuda_actual: deudaActual,
         activo: form.activo,
       });
 
@@ -345,17 +409,41 @@ export function EditarClienteModal({
                 </div>
 
                 {Number(form.deuda_actual) > 0 && (
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setForm({ ...form, deuda_actual: 0 })}
-                    className="h-7 px-2.5 text-xs gap-1 max-w-none cursor-pointer"
-                  >
-                    <RotateCcw className="size-3" />
-                    <span>Saldar deuda / Restablecer</span>
-                  </Button>
-                )}
+  <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-end">
+    <div className="flex-1 space-y-1">
+      <Label htmlFor="montoPagoCuenta" className="text-xs">
+        Monto abonado
+      </Label>
+      <Input
+        id="montoPagoCuenta"
+        type="number"
+        min="0.01"
+        step="0.01"
+        max={Number(form.deuda_actual) || 0}
+        value={montoPago}
+        onChange={(e) => setMontoPago(e.target.value)}
+        placeholder="0,00"
+        disabled={pagando || guardando}
+      />
+    </div>
+
+    <Button
+      type="button"
+      size="sm"
+      variant="outline"
+      onClick={handleRegistrarPago}
+      disabled={pagando || guardando || !montoPago}
+      className="h-9 px-3 text-xs gap-1 max-w-none cursor-pointer"
+    >
+      {pagando ? (
+        <Loader2 className="size-3 animate-spin" />
+      ) : (
+        <RotateCcw className="size-3" />
+      )}
+      <span>{pagando ? "Registrando..." : "Registrar pago"}</span>
+    </Button>
+  </div>
+)}
               </div>
             )}
           </div>

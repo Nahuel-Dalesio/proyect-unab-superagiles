@@ -6,6 +6,7 @@ import {
   updateClient,
   deactivateClient,
   configureCurrentAccount,
+  registerCurrentAccountPayment,
 } from "../controllers/cliente.controller.js";
 import {
   verifyToken,
@@ -51,6 +52,13 @@ router.patch(
   verifyToken,
   authorizeRoles("admin", "encargado"),
   configureCurrentAccount
+);
+
+router.post(
+  "/clientes/:id/cuenta-corriente/pago",
+  verifyToken,
+  authorizeRoles("admin", "encargado", "cajero"),
+  registerCurrentAccountPayment
 );
 
 router.delete(
