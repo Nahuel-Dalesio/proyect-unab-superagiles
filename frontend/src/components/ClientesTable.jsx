@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
+  Banknote,
   ChevronLeft,
   ChevronRight,
   EllipsisVertical,
@@ -40,10 +41,11 @@ export function ClientesTable({
   esGestor = true,
   onEditarCliente,
   onToggleActivo,
+  onCobrarDeuda,
   className,
 }) {
   const [paginaActual, setPaginaActual] = useState(1);
-  const totalColumnas = esGestor ? 8 : 7;
+  const totalColumnas = 9;
 
   const clientesOrdenados = useMemo(
     () =>
@@ -80,7 +82,7 @@ export function ClientesTable({
       )}
     >
       <div className="flex-1 min-h-0 overflow-auto">
-        <Table containerClassName="overflow-visible" className="min-w-[1000px] w-full">
+        <Table containerClassName="overflow-visible" className="min-w-[1050px] w-full">
           <TableHeader className="sticky top-0 z-10 bg-card shadow-xs [&_th]:bg-card">
             <TableRow className="hover:bg-transparent border-b">
               <TableHead className="px-4 py-3 font-normal text-foreground w-20 whitespace-nowrap">
@@ -95,6 +97,9 @@ export function ClientesTable({
               <TableHead className="px-4 py-3 font-normal text-foreground whitespace-nowrap">
                 Cuenta Corriente
               </TableHead>
+              <TableHead className="px-4 py-3 font-normal text-foreground text-center whitespace-nowrap">
+                Cobrar Deuda
+              </TableHead>
               <TableHead className="px-4 py-3 font-normal text-foreground whitespace-nowrap">
                 Teléfono
               </TableHead>
@@ -104,11 +109,9 @@ export function ClientesTable({
               <TableHead className="px-4 py-3 font-normal text-foreground whitespace-nowrap">
                 Dirección
               </TableHead>
-              {esGestor && (
-                <TableHead className="px-4 py-3 font-normal text-foreground text-right whitespace-nowrap">
-                  Acciones
-                </TableHead>
-              )}
+              <TableHead className="px-4 py-3 font-normal text-foreground text-right whitespace-nowrap">
+                Acciones
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -175,7 +178,7 @@ export function ClientesTable({
 
                     <TableCell className="px-4 py-3 whitespace-nowrap">
                       {tieneCuenta ? (
-                        <div className="flex flex-col gap-0.5">
+                        <div className="flex items-center gap-1.5">
                           <span
                             className={cn(
                               "inline-flex w-fit items-center rounded-md px-2 py-0.5 text-xs font-semibold border",
@@ -186,14 +189,33 @@ export function ClientesTable({
                           >
                             Disp: {formatoPrecio(disponible)}
                           </span>
-                          <span className="text-[11px] text-muted-foreground">
-                            Límite: {formatoPrecio(limite)}
-                          </span>
+                          {deuda > 0 && (
+                            <span className="inline-flex w-fit items-center rounded-md px-2 py-0.5 text-xs font-semibold border bg-red-500/10 text-red-700 dark:bg-red-500/15 dark:text-red-400 border-red-500/25">
+                              Deuda: {formatoPrecio(deuda)}
+                            </span>
+                          )}
                         </div>
                       ) : (
                         <span className="inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium border bg-muted text-muted-foreground border-border">
                           Sin cuenta
                         </span>
+                      )}
+                    </TableCell>
+
+                    <TableCell className="px-4 py-3 text-center whitespace-nowrap">
+                      {tieneCuenta && deuda > 0 ? (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="accent"
+                          onClick={() => onCobrarDeuda?.(item)}
+                          className="h-7 px-2.5 text-xs gap-1 max-w-none cursor-pointer"
+                        >
+                          <Banknote className="size-3.5" />
+                          <span>Cobrar deuda</span>
+                        </Button>
+                      ) : (
+                        <span className="text-muted-foreground text-sm">—</span>
                       )}
                     </TableCell>
 
@@ -209,28 +231,37 @@ export function ClientesTable({
                       {item.direccion || "—"}
                     </TableCell>
 
-                    {esGestor && (
-                      <TableCell className="px-4 py-3 text-right">
-                        <div className="flex items-center justify-end">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="size-8 hover:bg-muted text-muted-foreground hover:text-foreground cursor-pointer"
-                                aria-label="Opciones de cliente"
-                              >
-                                <EllipsisVertical className="size-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-44">
+                    <TableCell className="px-4 py-3 text-right">
+                      <div className="flex items-center justify-end">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-8 hover:bg-muted text-muted-foreground hover:text-foreground cursor-pointer"
+                              aria-label="Opciones de cliente"
+                            >
+                              <EllipsisVertical className="size-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-44">
+                            {deuda > 0 && (
                               <DropdownMenuItem
-                                onClick={() => onEditarCliente?.(item)}
+                                onClick={() => onCobrarDeuda?.(item)}
                                 className="cursor-pointer gap-2"
                               >
-                                <Pencil className="size-4 text-muted-foreground" />
-                                <span>Editar Cliente</span>
+                                <Banknote className="size-4 text-accent" />
+                                <span>Cobrar deuda</span>
                               </DropdownMenuItem>
+                            )}
+                            <DropdownMenuItem
+                              onClick={() => onEditarCliente?.(item)}
+                              className="cursor-pointer gap-2"
+                            >
+                              <Pencil className="size-4 text-muted-foreground" />
+                              <span>Editar Cliente</span>
+                            </DropdownMenuItem>
+                            {esGestor && (
                               <DropdownMenuItem
                                 onClick={() => onToggleActivo?.(item)}
                                 className="cursor-pointer gap-2"
@@ -247,11 +278,11 @@ export function ClientesTable({
                                   </>
                                 )}
                               </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                      </TableCell>
-                    )}
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </TableCell>
                   </TableRow>
                 );
               })
