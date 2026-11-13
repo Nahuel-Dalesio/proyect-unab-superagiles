@@ -18,8 +18,9 @@ const formatoPrecio = (valor) =>
 
 export default function Ventas() {
   const { user } = useContext(AuthContext);
-  const esGestor =
-    !user || user.rol === ROLES.ADMIN || user.rol === ROLES.ENCARGADO;
+  const esGestor = Boolean(
+    user && (user.rol === ROLES.ADMIN || user.rol === ROLES.ENCARGADO)
+  );
 
   const [ventas, setVentas] = useState([]);
   const [cargando, setCargando] = useState(true);

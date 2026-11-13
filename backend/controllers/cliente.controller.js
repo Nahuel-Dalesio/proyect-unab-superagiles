@@ -89,9 +89,14 @@ export const createClient = async (req, res) => {
 
 export const updateClient = async (req, res) => {
   try {
+    const payload = { ...req.body };
+    if (req.user?.rol === "cajero") {
+      delete payload.activo;
+    }
+
     const client = await updateClientData(
       req.params.id,
-      req.body
+      payload
     );
 
     return res.status(200).json({

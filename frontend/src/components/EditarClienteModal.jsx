@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
-import { Loader2, RotateCcw, UserCheck, Wallet } from "lucide-react";
+import { Loader2, UserCheck, Wallet } from "lucide-react";
 import {
   actualizarCliente,
   MONTOS_CUENTA_CORRIENTE,
-  registrarPagoCuentaCorriente,
 } from "@/service/cliente.service";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +31,7 @@ export function EditarClienteModal({
   open,
   onOpenChange,
   cliente,
+  esGestor = true,
   onSuccess,
 }) {
   const [form, setForm] = useState({
@@ -47,8 +47,6 @@ export function EditarClienteModal({
     activo: true,
   });
   const [guardando, setGuardando] = useState(false);
-  const [montoPago, setMontoPago] = useState("");
-  const [pagando, setPagando] = useState(false);
 
   useEffect(() => {
     if (cliente && open) {
@@ -67,7 +65,6 @@ export function EditarClienteModal({
         deuda_actual: Number(cliente.deuda_actual || 0),
         activo: Boolean(cliente.activo ?? true),
       });
-      setMontoPago("");
     }
   }, [cliente, open]);
 
@@ -78,79 +75,21 @@ export function EditarClienteModal({
   };
 
   const handleSeleccionarMontoCuenta = (monto) => {
-  const nuevoLimite = Number(monto) || 0;
-  const deudaActual = Number(form.deuda_actual) || 0;
+    const nuevoLimite = Number(monto) || 0;
+    const deudaActual = Number(form.deuda_actual) || 0;
 
-  if (nuevoLimite < deudaActual) {
-    showWarning(
-      "El límite de crédito no puede ser menor que la deuda pendiente del cliente."
-    );
-    return;
-  }
-
-  setForm({
-    ...form,
-    limite_credito: nuevoLimite,
-  });
-};
-
-const handleRegistrarPago = async () => {
-  if (!cliente) return;
-
-  const monto = Number(montoPago);
-  const deudaActual = Number(form.deuda_actual) || 0;
-
-  if (
-    !Number.isFinite(monto) ||
-    monto <= 0 ||
-    Number(monto.toFixed(2)) !== monto
-  ) {
-    showWarning("Ingresá un monto mayor que 0 y con hasta 2 decimales.");
-    return;
-  }
-
-  if (monto > deudaActual) {
-    showWarning("El pago no puede superar la deuda pendiente.");
-    return;
-  }
-
-  setPagando(true);
-
-  try {
-    const data = await registrarPagoCuentaCorriente(
-      cliente.id_cliente,
-      monto
-    );
-
-    const clienteActualizado = data?.client;
-
-    setForm((formActual) => ({
-      ...formActual,
-      deuda_actual: Number(
-        clienteActualizado?.deuda_actual ?? deudaActual - monto
-      ),
-    }));
-
-    setMontoPago("");
-
-    showSuccess(
-      `Se registró un pago de ${formatoMoneda(monto)}.`,
-      "Pago registrado"
-    );
-
-    if (onSuccess) {
-      await onSuccess(clienteActualizado);
+    if (nuevoLimite < deudaActual) {
+      showWarning(
+        "El límite de crédito no puede ser menor que la deuda pendiente del cliente."
+      );
+      return;
     }
-  } catch (error) {
-    showError(
-      error.status
-        ? error.message
-        : "Error al registrar el pago de cuenta corriente"
-    );
-  } finally {
-    setPagando(false);
-  }
-};
+
+    setForm({
+      ...form,
+      limite_credito: nuevoLimite,
+    });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -195,7 +134,7 @@ const handleRegistrarPago = async () => {
         direccion: form.direccion.trim(),
         cuenta_corriente_habilitada: limiteCredito > 0,
         limite_credito: limiteCredito,
-        activo: form.activo,
+        ...(esGestor && { activo: form.activo }),
       });
 
       onOpenChange(false);
@@ -393,76 +332,39 @@ const handleRegistrarPago = async () => {
 
             {Number(form.limite_credito) > 0 && (
               <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border/80 bg-card px-3 py-2 text-xs">
-                <div className="space-y-0.5">
-                  <div>
-                    <span className="text-muted-foreground">Saldo disponible: </span>
-                    <strong className="text-emerald-600 dark:text-emerald-400">
-                      {formatoMoneda(saldoDisponible)}
-                    </strong>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Consumido (fiado): </span>
-                    <strong className="text-foreground">
-                      {formatoMoneda(form.deuda_actual)}
-                    </strong>
-                  </div>
+                <div>
+                  <span className="text-muted-foreground">Saldo disponible: </span>
+                  <strong className="text-emerald-600 dark:text-emerald-400">
+                    {formatoMoneda(saldoDisponible)}
+                  </strong>
                 </div>
-
-                {Number(form.deuda_actual) > 0 && (
-  <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-end">
-    <div className="flex-1 space-y-1">
-      <Label htmlFor="montoPagoCuenta" className="text-xs">
-        Monto abonado
-      </Label>
-      <Input
-        id="montoPagoCuenta"
-        type="number"
-        min="0.01"
-        step="0.01"
-        max={Number(form.deuda_actual) || 0}
-        value={montoPago}
-        onChange={(e) => setMontoPago(e.target.value)}
-        placeholder="0,00"
-        disabled={pagando || guardando}
-      />
-    </div>
-
-    <Button
-      type="button"
-      size="sm"
-      variant="outline"
-      onClick={handleRegistrarPago}
-      disabled={pagando || guardando || !montoPago}
-      className="h-9 px-3 text-xs gap-1 max-w-none cursor-pointer"
-    >
-      {pagando ? (
-        <Loader2 className="size-3 animate-spin" />
-      ) : (
-        <RotateCcw className="size-3" />
-      )}
-      <span>{pagando ? "Registrando..." : "Registrar pago"}</span>
-    </Button>
-  </div>
-)}
+                <div>
+                  <span className="text-muted-foreground">Deuda actual: </span>
+                  <strong className="text-foreground">
+                    {formatoMoneda(form.deuda_actual)}
+                  </strong>
+                </div>
               </div>
             )}
           </div>
 
-          {/* Switch para activar / desactivar */}
-          <div className="flex items-center justify-between gap-2 rounded-lg border p-3 bg-muted/20">
-            <div className="space-y-0.5">
-              <Label className="text-sm font-medium">Estado del cliente</Label>
-              <p className="text-xs text-muted-foreground">
-                {form.activo
-                  ? "Cliente habilitado para compras y facturación"
-                  : "Cliente inactivo / deshabilitado"}
-              </p>
+          {/* Switch para activar / desactivar (solo admin y encargado) */}
+          {esGestor && (
+            <div className="flex items-center justify-between gap-2 rounded-lg border p-3 bg-muted/20">
+              <div className="space-y-0.5">
+                <Label className="text-sm font-medium">Estado del cliente</Label>
+                <p className="text-xs text-muted-foreground">
+                  {form.activo
+                    ? "Cliente habilitado para compras y facturación"
+                    : "Cliente inactivo / deshabilitado"}
+                </p>
+              </div>
+              <Switch
+                checked={form.activo}
+                onCheckedChange={(checked) => setForm({ ...form, activo: checked })}
+              />
             </div>
-            <Switch
-              checked={form.activo}
-              onCheckedChange={(checked) => setForm({ ...form, activo: checked })}
-            />
-          </div>
+          )}
 
           <DialogFooter className="pt-2">
             <Button

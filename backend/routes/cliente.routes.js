@@ -30,7 +30,7 @@ router.get(
   getClient
 );
 
-// Todos los roles pueden hacer el alta de un cliente (inclusive desde Caja).
+// Todos los roles pueden hacer el alta y edición de un cliente.
 router.post(
   "/clientes",
   verifyToken,
@@ -38,11 +38,10 @@ router.post(
   createClient
 );
 
-// La edición y baja lógica queda reservada a admin y encargado.
 router.put(
   "/clientes/:id",
   verifyToken,
-  authorizeRoles("admin", "encargado"),
+  authorizeRoles("admin", "encargado", "cajero"),
   updateClient
 );
 
@@ -61,6 +60,7 @@ router.post(
   registerCurrentAccountPayment
 );
 
+// La baja lógica queda reservada a admin y encargado.
 router.delete(
   "/clientes/:id",
   verifyToken,

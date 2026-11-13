@@ -11,12 +11,14 @@ import { Button } from "@/components/ui/button";
 import { ClientesTable } from "@/components/ClientesTable";
 import { NuevoClienteModal } from "@/components/NuevoClienteModal";
 import { EditarClienteModal } from "@/components/EditarClienteModal";
+import { CobrarDeudaModal } from "@/components/CobrarDeudaModal";
 import { showError, showSuccess } from "@/utils/alerts";
 
 export default function Clientes() {
   const { user } = useContext(AuthContext);
-  const esGestor =
-    !user || user.rol === ROLES.ADMIN || user.rol === ROLES.ENCARGADO;
+  const esGestor = Boolean(
+    user && (user.rol === ROLES.ADMIN || user.rol === ROLES.ENCARGADO)
+  );
 
   const [clientes, setClientes] = useState([]);
   const [cargando, setCargando] = useState(true);
@@ -26,6 +28,8 @@ export default function Clientes() {
   const [modalNuevoAbierto, setModalNuevoAbierto] = useState(false);
   const [modalEditarAbierto, setModalEditarAbierto] = useState(false);
   const [clienteAEditar, setClienteAEditar] = useState(null);
+  const [modalCobrarDeudaAbierto, setModalCobrarDeudaAbierto] = useState(false);
+  const [clienteACobrarDeuda, setClienteACobrarDeuda] = useState(null);
 
   const cargarClientes = useCallback(async () => {
     setCargando(true);
@@ -85,6 +89,12 @@ export default function Clientes() {
     setModalEditarAbierto(true);
   };
 
+  // Cobrar deuda de cuenta corriente (habilitado para todos los roles, incluido cajero)
+  const handleAbrirCobrarDeuda = (cliente) => {
+    setClienteACobrarDeuda(cliente);
+    setModalCobrarDeudaAbierto(true);
+  };
+
   // Filtrado de clientes
   const clientesFiltrados = clientes.filter((c) => {
     const term = busqueda.toLowerCase().trim();
@@ -111,7 +121,7 @@ export default function Clientes() {
           <div className="px-3 min-w-0">
             <div className="text-lg font-semibold">Clientes</div>
             <div className="text-sm text-muted-foreground truncate">
-              Gestión de clientes y datos de facturación
+              Gestión de clientes, facturación y cuenta corriente
             </div>
           </div>
         </div>
@@ -144,6 +154,7 @@ export default function Clientes() {
         esGestor={esGestor}
         onEditarCliente={handleAbrirEditar}
         onToggleActivo={handleToggleActivo}
+        onCobrarDeuda={handleAbrirCobrarDeuda}
       />
 
       {/* Modal para nuevo cliente */}
@@ -158,6 +169,15 @@ export default function Clientes() {
         open={modalEditarAbierto}
         onOpenChange={setModalEditarAbierto}
         cliente={clienteAEditar}
+        esGestor={esGestor}
+        onSuccess={cargarClientes}
+      />
+
+      {/* Modal para cobrar deuda de cuenta corriente */}
+      <CobrarDeudaModal
+        open={modalCobrarDeudaAbierto}
+        onOpenChange={setModalCobrarDeudaAbierto}
+        cliente={clienteACobrarDeuda}
         onSuccess={cargarClientes}
       />
     </div>
