@@ -4,6 +4,7 @@ import {
   registerClient,
   updateClient as updateClientData,
   configureClientAccount as configureClientAccountData,
+  registerClientAccountPayment as registerClientAccountPaymentData,
   ClientError,
 } from "../service/cliente.service.js";
 
@@ -11,6 +12,10 @@ const CLIENT_ERROR_STATUS = {
   MISSING_FIELDS: 400,
   INVALID_VALUES: 400,
   INVALID_ID: 400,
+  CURRENT_ACCOUNT_DISABLED: 400,
+  INVALID_PAYMENT_AMOUNT: 400,
+  CLIENT_HAS_NO_DEBT: 400,
+  PAYMENT_EXCEEDS_DEBT: 400,
   CLIENT_NOT_FOUND: 404,
   DUPLICATE_DOCUMENT: 409,
 };
@@ -149,6 +154,32 @@ export const configureCurrentAccount = async (req, res) => {
 
     return res.status(500).json({
       message: "Error interno al configurar la cuenta corriente",
+    });
+  }
+};
+
+export const registerCurrentAccountPayment = async (req, res) => {
+  try {
+    const client = await registerClientAccountPaymentData(
+      req.params.id,
+      req.body
+    );
+
+    return res.status(200).json({
+      message: "Pago de cuenta corriente registrado correctamente",
+      client,
+    });
+  } catch (error) {
+    const response = handleClientError(error, res);
+    if (response) return response;
+
+    console.error(
+      "Error al registrar el pago de cuenta corriente:",
+      error
+    );
+
+    return res.status(500).json({
+      message: "Error interno al registrar el pago de cuenta corriente",
     });
   }
 };

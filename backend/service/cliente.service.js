@@ -322,10 +322,6 @@ export const updateClient = async (id, data = {}) => {
     changes.limite_credito = parseCreditLimit(data.limite_credito);
   }
 
-  if (data.deuda_actual !== undefined) {
-    changes.deuda_actual = parseCreditLimit(data.deuda_actual);
-  }
-
   if (Object.keys(changes).length === 0) {
     throw new ClientError(
       "MISSING_FIELDS",
@@ -386,14 +382,6 @@ export const updateClient = async (id, data = {}) => {
     }
   }
 
-  // Si se deshabilita la cuenta corriente y el límite pasa a 0, también reiniciamos deuda_actual si no fue enviada
-  if (
-    changes.cuenta_corriente_habilitada === false &&
-    changes.limite_credito === 0 &&
-    changes.deuda_actual === undefined
-  ) {
-    changes.deuda_actual = 0;
-  }
 
   const deudaFinal =
     changes.deuda_actual !== undefined
@@ -446,10 +434,6 @@ export const configureClientAccount = async (id, data = {}) => {
     );
   }
 
-  if (data.deuda_actual !== undefined) {
-    changes.deuda_actual = parseCreditLimit(data.deuda_actual);
-  }
-
   if (Object.keys(changes).length === 0) {
     throw new ClientError(
       "MISSING_FIELDS",
@@ -477,5 +461,66 @@ export const configureClientAccount = async (id, data = {}) => {
   return serializeClient({
     ...existingClient,
     ...changes,
+  });
+};
+
+export const registerClientAccountPayment = async (id, data = {}) => {
+  const idCliente = parseClientId(id);
+  const existingClient = await findClientById(idCliente);
+
+  if (!existingClient) {
+    throw new ClientError(
+      "CLIENT_NOT_FOUND",
+      "Cliente no encontrado"
+    );
+  }
+
+  if (!Boolean(existingClient.cuenta_corriente_habilitada)) {
+    throw new ClientError(
+      "CURRENT_ACCOUNT_DISABLED",
+      "El cliente no tiene habilitada la cuenta corriente"
+    );
+  }
+
+  const monto = Number(data.monto);
+
+  if (
+    !Number.isFinite(monto) ||
+    monto <= 0 ||
+    monto > MAX_CREDITO ||
+    Number(monto.toFixed(2)) !== monto
+  ) {
+    throw new ClientError(
+      "INVALID_PAYMENT_AMOUNT",
+      "El monto del pago debe ser mayor que 0 y tener hasta 2 decimales"
+    );
+  }
+
+  const deudaActual = Number(existingClient.deuda_actual ?? 0);
+
+  if (deudaActual <= 0) {
+    throw new ClientError(
+      "CLIENT_HAS_NO_DEBT",
+      "El cliente no tiene deuda pendiente"
+    );
+  }
+
+  if (monto > deudaActual) {
+    throw new ClientError(
+      "PAYMENT_EXCEEDS_DEBT",
+      "El monto del pago no puede superar la deuda actual"
+    );
+  }
+
+  const nuevaDeuda =
+    Math.round((deudaActual - monto) * 100) / 100;
+
+  await updateClientById(idCliente, {
+    deuda_actual: nuevaDeuda,
+  });
+
+  return serializeClient({
+    ...existingClient,
+    deuda_actual: nuevaDeuda,
   });
 };

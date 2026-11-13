@@ -1,6 +1,6 @@
 import { apiRequest } from "./api";
 
-// Montos fijos disponibles para asignar como Cuenta Corriente (saldo a favor)
+// Límites de crédito fijos disponibles para la cuenta corriente
 export const MONTOS_CUENTA_CORRIENTE = [100000, 200000, 300000, 500000];
 
 // GET /api/clientes?search=...
@@ -39,6 +39,14 @@ export const configurarCuentaCorriente = (idCliente, datos) =>
   apiRequest(`/api/clientes/${idCliente}/cuenta-corriente`, {
     method: "PATCH",
     body: datos,
+  });
+
+  // POST /api/clientes/:id/cuenta-corriente/pago
+// Registra un pago total o parcial y descuenta el monto de la deuda del cliente.
+export const registrarPagoCuentaCorriente = (idCliente, monto) =>
+  apiRequest(`/api/clientes/${idCliente}/cuenta-corriente/pago`, {
+    method: "POST",
+    body: { monto },
   });
 
 // DELETE /api/clientes/:id
